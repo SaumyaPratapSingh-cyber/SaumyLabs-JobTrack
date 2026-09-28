@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 
 // Groq models are insanely fast
 const MODELS = [
-  'llama-3.1-8b-instant',
-  'llama3-8b-8192',
-  'llama-3.1-70b-versatile'
+  'openai/gpt-oss-20b',
+  'qwen/qwen3.8-27b',
+  'openai/gpt-oss-120b',
+  'canopylabs/orpheus-v1-english'
 ]
 
 export async function POST(req: NextRequest) {
@@ -84,8 +85,8 @@ Return ONLY the JSON object, no explanation, no markdown. Do not include \`\`\`j
       } catch (err: any) {
         console.warn(`❌ Model ${modelName} failed: ${err?.message}`)
         lastError = err
-        // Only continue to next model on specific rate limit or server errors
-        if (!err?.message?.includes('429') && !err?.message?.includes('502') && !err?.message?.includes('503')) {
+        // Only continue to next model on specific rate limit, model missing, or server errors
+        if (!err?.message?.includes('429') && !err?.message?.includes('404') && !err?.message?.includes('502') && !err?.message?.includes('503')) {
           break
         }
       }
