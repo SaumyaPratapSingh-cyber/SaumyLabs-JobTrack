@@ -46,12 +46,11 @@ export default function MotivatingQuotes() {
     }}>
       <span style={{ fontSize: 14 }}>✨</span>
       <p style={{ 
-        fontSize: 13, 
+        fontSize: 17, 
         color: 'var(--ink-2)', 
         fontStyle: 'italic', 
         fontFamily: 'Instrument Serif, serif',
-        letterSpacing: '0.02em',
-        fontSize: 17
+        letterSpacing: '0.02em'
       }}>
         "{QUOTES[index]}"
       </p>
