@@ -3,6 +3,7 @@ import { createClient } from '@/utils/supabase/server'
 import { signOut } from './actions'
 import JobTable from './JobTable'
 import AddJobModal from './AddJobModal'
+import ExportButton from './ExportButton'
 import SettingsModal from './SettingsModal'
 import MotivatingQuotes from '@/components/ui/MotivatingQuotes'
 import { JobApplication, UserProfile } from '@/types/job'
@@ -105,7 +106,10 @@ export default async function DashboardPage() {
             <h2 style={{ fontWeight: 600, fontSize: 15, color: 'var(--ink)' }}>Applications</h2>
             <p style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 2 }}>{j.length} total · newest first</p>
           </div>
-          <AddJobModal />
+          <div style={{ display: 'flex', gap: 10 }}>
+            <ExportButton jobs={j as JobApplication[]} />
+            <AddJobModal />
+          </div>
         </div>
 
         {/* ── TABLE ── */}
