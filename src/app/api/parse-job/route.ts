@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// The fastest and most reliable free models on OpenRouter
+// Groq models are insanely fast
 const MODELS = [
-  'meta-llama/llama-3.1-8b-instruct:free',
-  'google/gemini-2.5-flash-exp:free', 
-  'huggingface/zephyr-7b-beta:free'
+  'llama-3.1-8b-instant',
+  'llama3-8b-8192',
+  'llama-3.1-70b-versatile'
 ]
 
 export async function POST(req: NextRequest) {
@@ -32,15 +32,15 @@ Extract information from the text below and return ONLY a valid JSON object with
 Return ONLY the JSON object, no explanation, no markdown. Do not include \`\`\`json blocks.`
 
     let lastError: any = null
-    const apiKey = process.env.OPENROUTER_API_KEY || process.env.NEXT_PUBLIC_OPENROUTER_API_KEY
+    const apiKey = process.env.GROQ_API_KEY || process.env.NEXT_PUBLIC_GROQ_API_KEY
 
     if (!apiKey) {
-      return NextResponse.json({ error: 'OpenRouter API key is missing in environment variables.' }, { status: 500 })
+      return NextResponse.json({ error: 'Groq API key is missing in environment variables.' }, { status: 500 })
     }
 
     for (const modelName of MODELS) {
       try {
-        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${apiKey}`,
@@ -58,7 +58,7 @@ Return ONLY the JSON object, no explanation, no markdown. Do not include \`\`\`j
 
         if (!response.ok) {
           const errorText = await response.text()
-          throw new Error(`OpenRouter error: ${response.status} - ${errorText}`)
+          throw new Error(`Groq error: ${response.status} - ${errorText}`)
         }
 
         const data = await response.json()
@@ -78,13 +78,13 @@ Return ONLY the JSON object, no explanation, no markdown. Do not include \`\`\`j
           if (parsed[key] === '') parsed[key] = undefined
         })
 
-        console.log(`✅ Parsed successfully using model: ${modelName}`)
+        console.log(`✅ Parsed successfully using Groq model: ${modelName}`)
         return NextResponse.json(parsed)
 
       } catch (err: any) {
         console.warn(`❌ Model ${modelName} failed: ${err?.message}`)
         lastError = err
-        // Only continue to next model on specific rate limit or model-down errors
+        // Only continue to next model on specific rate limit or server errors
         if (!err?.message?.includes('429') && !err?.message?.includes('502') && !err?.message?.includes('503')) {
           break
         }
