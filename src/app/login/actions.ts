@@ -49,3 +49,28 @@ export async function signup(formData: FormData) {
   revalidatePath('/', 'layout')
   redirect('/login?message=Check email to continue sign in process')
 }
+
+export async function resetPassword(formData: FormData) {
+  const supabase = await createClient()
+  const email = formData.get('email') as string
+  
+  // Try to use headers for origin, fallback to localhost for dev if not available
+  let origin = 'http://localhost:3000'
+  try {
+    const { headers } = await import('next/headers')
+    const headersList = await headers()
+    origin = headersList.get('origin') || origin
+  } catch (e) {
+    // ignore
+  }
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/auth/callback?next=/update-password`,
+  })
+
+  if (error) {
+    redirect('/login?error=' + encodeURIComponent(error.message))
+  }
+
+  redirect('/login?message=Check your email for the password reset link')
+}
