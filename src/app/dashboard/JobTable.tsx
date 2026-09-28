@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { updateJobStatus, deleteJobApplication } from '@/app/dashboard/actions'
 import { JobApplication, JobStatus } from '@/types/job'
-import { Trash2, Edit2, Hash } from 'lucide-react'
+import { Trash2, Edit2, Hash, ExternalLink } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import EditJobModal from './EditJobModal'
 
@@ -35,7 +35,7 @@ function CompanyFavicon({ company }: { company: string }) {
 
 function SkeletonRow() {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(160px, 1.5fr) minmax(160px, 1.5fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(120px, 1fr) minmax(100px, 1fr) minmax(140px, 1.5fr) minmax(120px, 1.2fr) 60px', borderBottom: '1px solid var(--border)' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(160px, 1.5fr) minmax(160px, 1.5fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(120px, 1fr) minmax(100px, 1fr) minmax(140px, 1.5fr) minmax(120px, 1.2fr) 90px', borderBottom: '1px solid var(--border)' }}>
       {[120, 160, 80, 80, 70, 60, 100, 70, 32].map((w, i) => (
         <div key={i} style={{ padding: '14px 16px', borderRight: i < 8 ? '1px solid var(--border)' : 'none' }}>
           <div className="skeleton" style={{ height: 13, width: w }} />
@@ -88,7 +88,7 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
         <div style={{ overflowX: 'auto' }}>
           <div style={{ minWidth: 1100 }}>
             {/* Header */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(140px, 1.5fr) minmax(160px, 1.5fr) minmax(90px, 1fr) minmax(100px, 1fr) minmax(110px, 1fr) minmax(100px, 1fr) minmax(160px, 1.5fr) minmax(120px, 1.2fr) 60px', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(140px, 1.5fr) minmax(160px, 1.5fr) minmax(90px, 1fr) minmax(100px, 1fr) minmax(110px, 1fr) minmax(100px, 1fr) minmax(160px, 1.5fr) minmax(120px, 1.2fr) 90px', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' }}>
               {HEADS.map((h, i) => (
                 <div key={i} style={{ padding: '12px 16px', fontSize: 10, fontWeight: 600, color: 'var(--ink-3)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap', borderRight: i < 8 ? '1px solid var(--border)' : 'none' }}>
                   {h}
@@ -103,7 +103,7 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
                 : localJobs.map((job, i) => {
                   const st = STATUS_STYLE[job.status as JobStatus] ?? STATUS_STYLE.Applied
                   return (
-                    <div key={job.id} onClick={() => setEditingJob(job)} className="job-row row-in" style={{ display: 'grid', gridTemplateColumns: 'minmax(140px, 1.5fr) minmax(160px, 1.5fr) minmax(90px, 1fr) minmax(100px, 1fr) minmax(110px, 1fr) minmax(100px, 1fr) minmax(160px, 1.5fr) minmax(120px, 1.2fr) 60px', borderBottom: '1px solid var(--border)', animationDelay: `${i * 45}ms`, opacity: updating === job.id ? 0.5 : 1, transition: 'opacity 200ms, background 150ms', alignItems: 'center', cursor: 'pointer' }}>
+                    <div key={job.id} onClick={() => setEditingJob(job)} className="job-row row-in" style={{ display: 'grid', gridTemplateColumns: 'minmax(140px, 1.5fr) minmax(160px, 1.5fr) minmax(90px, 1fr) minmax(100px, 1fr) minmax(110px, 1fr) minmax(100px, 1fr) minmax(160px, 1.5fr) minmax(120px, 1.2fr) 90px', borderBottom: '1px solid var(--border)', animationDelay: `${i * 45}ms`, opacity: updating === job.id ? 0.5 : 1, transition: 'opacity 200ms, background 150ms', alignItems: 'center', cursor: 'pointer' }}>
                       <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10, height: '100%' }}>
                         <CompanyFavicon company={job.company_name} />
                         <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job.company_name}</span>
@@ -154,16 +154,28 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
                         </div>
                       </div>
 
-                      <div style={{ padding: '12px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, height: '100%' }}>
+                      <div style={{ padding: '12px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, height: '100%' }}>
+                        {job.job_url ? (
+                          <a href={job.job_url} target="_blank" rel="noopener noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            style={{ color: 'var(--ink-4)', transition: 'color 150ms', display: 'flex', alignItems: 'center' }}
+                            onMouseOver={e => (e.currentTarget.style.color = 'var(--accent)')}
+                            onMouseOut={e => (e.currentTarget.style.color = 'var(--ink-4)')}
+                            title="Open Job Link">
+                            <ExternalLink size={13} />
+                          </a>
+                        ) : (
+                          <span style={{ width: 13 }} /> /* Spacer for alignment */
+                        )}
                         <button onClick={e => { e.stopPropagation(); setEditingJob(job); }}
-                          style={{ color: 'var(--ink-4)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: 'color 150ms' }}
+                          style={{ color: 'var(--ink-4)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: 'color 150ms', display: 'flex', alignItems: 'center' }}
                           onMouseOver={e => (e.currentTarget.style.color = 'var(--accent)')}
                           onMouseOut={e => (e.currentTarget.style.color = 'var(--ink-4)')}
                           title="Edit Details">
                           <Edit2 size={13} />
                         </button>
                         <button onClick={e => handleDelete(job.id, e)} disabled={updating === job.id}
-                          style={{ color: 'var(--ink-4)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: 'color 150ms' }}
+                          style={{ color: 'var(--ink-4)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: 'color 150ms', display: 'flex', alignItems: 'center' }}
                           onMouseOver={e => (e.currentTarget.style.color = 'var(--s-rejected)')}
                           onMouseOut={e => (e.currentTarget.style.color = 'var(--ink-4)')}
                           title="Delete">
