@@ -5,10 +5,12 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
 // Try models in order until one works
 const MODELS = [
-  'gemini-1.5-flash', // Massive 1,500 requests/day free tier limit
-  'gemini-2.5-flash',
+  'gemini-flash-lite-latest',
+  'gemini-3.5-flash-lite',
+  'gemini-2.5-flash-lite',
   'gemini-3.8-flash',
-  'gemini-3.8-flash-lite-preview-06-17',
+  'gemini-3.5-flash',
+  'gemini-2.5-flash',
 ]
 
 export async function POST(req: NextRequest) {
