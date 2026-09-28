@@ -1,16 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-
-// Try models in order until one works
+// The fastest and most reliable free models on OpenRouter
 const MODELS = [
-  'gemini-flash-lite-latest',
-  'gemini-3.5-flash-lite',
-  'gemini-2.5-flash-lite',
-  'gemini-3.8-flash',
-  'gemini-3.5-flash',
-  'gemini-2.5-flash',
+  'meta-llama/llama-3.1-8b-instruct:free',
+  'google/gemini-2.5-flash-exp:free', 
+  'huggingface/zephyr-7b-beta:free'
 ]
 
 export async function POST(req: NextRequest) {
@@ -35,22 +29,42 @@ Extract information from the text below and return ONLY a valid JSON object with
 - job_url (string): URL if mentioned, or empty string
 - notes (string): Any other useful info, or empty string
 
-Return ONLY the JSON object, no explanation, no markdown.
-
-Text:
-${text}`
+Return ONLY the JSON object, no explanation, no markdown. Do not include \`\`\`json blocks.`
 
     let lastError: any = null
+    const apiKey = process.env.OPENROUTER_API_KEY || process.env.NEXT_PUBLIC_OPENROUTER_API_KEY
+
+    if (!apiKey) {
+      return NextResponse.json({ error: 'OpenRouter API key is missing in environment variables.' }, { status: 500 })
+    }
 
     for (const modelName of MODELS) {
       try {
-        const model = genAI.getGenerativeModel({
-          model: modelName,
-          generationConfig: { responseMimeType: 'application/json' },
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: modelName,
+            messages: [
+              { role: "system", content: prompt },
+              { role: "user", content: text }
+            ],
+            response_format: { type: "json_object" }
+          })
         })
 
-        const result = await model.generateContent(prompt)
-        const rawText = result.response.text().trim()
+        if (!response.ok) {
+          const errorText = await response.text()
+          throw new Error(`OpenRouter error: ${response.status} - ${errorText}`)
+        }
+
+        const data = await response.json()
+        const rawText = data.choices[0].message.content.trim()
+        
+        // Clean up markdown just in case the model ignored the system prompt
         const cleaned = rawText
           .replace(/^```json\s*/i, '')
           .replace(/^```\s*/i, '')
@@ -59,17 +73,19 @@ ${text}`
 
         const parsed = JSON.parse(cleaned)
 
+        // Clean up empty strings
         Object.keys(parsed).forEach((key) => {
           if (parsed[key] === '') parsed[key] = undefined
         })
 
-        console.log(`? Parsed successfully using model: ${modelName}`)
+        console.log(`✅ Parsed successfully using model: ${modelName}`)
         return NextResponse.json(parsed)
+
       } catch (err: any) {
-        console.warn(`?? Model ${modelName} failed: ${err?.message}`)
+        console.warn(`❌ Model ${modelName} failed: ${err?.message}`)
         lastError = err
-        // Only continue to next model on 503/404/429 errors
-        if (!err?.message?.includes('503') && !err?.message?.includes('404') && !err?.message?.includes('429')) {
+        // Only continue to next model on specific rate limit or model-down errors
+        if (!err?.message?.includes('429') && !err?.message?.includes('502') && !err?.message?.includes('503')) {
           break
         }
       }
