@@ -5,10 +5,10 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
 // Try models in order until one works
 const MODELS = [
+  'gemini-1.5-flash', // Massive 1,500 requests/day free tier limit
+  'gemini-2.5-flash',
   'gemini-3.8-flash',
   'gemini-3.8-flash-lite-preview-06-17',
-  'gemini-2.5-flash',
-  'gemini-2.5-flash-lite',
 ]
 
 export async function POST(req: NextRequest) {
@@ -61,13 +61,13 @@ ${text}`
           if (parsed[key] === '') parsed[key] = undefined
         })
 
-        console.log(`✅ Parsed successfully using model: ${modelName}`)
+        console.log(`? Parsed successfully using model: ${modelName}`)
         return NextResponse.json(parsed)
       } catch (err: any) {
-        console.warn(`⚠️ Model ${modelName} failed: ${err?.message}`)
+        console.warn(`?? Model ${modelName} failed: ${err?.message}`)
         lastError = err
-        // Only continue to next model on 503/404 errors
-        if (!err?.message?.includes('503') && !err?.message?.includes('404')) {
+        // Only continue to next model on 503/404/429 errors
+        if (!err?.message?.includes('503') && !err?.message?.includes('404') && !err?.message?.includes('429')) {
           break
         }
       }
