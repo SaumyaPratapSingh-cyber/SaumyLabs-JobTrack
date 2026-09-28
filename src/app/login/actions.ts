@@ -54,12 +54,17 @@ export async function resetPassword(formData: FormData) {
   const supabase = await createClient()
   const email = formData.get('email') as string
   
-  // Try to use headers for origin, fallback to localhost for dev if not available
   let origin = 'http://localhost:3000'
   try {
     const { headers } = await import('next/headers')
     const headersList = await headers()
-    origin = headersList.get('origin') || origin
+    
+    // Check x-forwarded-host first (Vercel), then host
+    const host = headersList.get('x-forwarded-host') || headersList.get('host')
+    const protocol = host?.includes('localhost') ? 'http' : 'https'
+    if (host) {
+      origin = `${protocol}://${host}`
+    }
   } catch (e) {
     // ignore
   }
