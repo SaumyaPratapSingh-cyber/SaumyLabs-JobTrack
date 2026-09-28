@@ -6,6 +6,7 @@ import AddJobModal from './AddJobModal'
 import ExportButton from './ExportButton'
 import SettingsModal from './SettingsModal'
 import MotivatingQuotes from '@/components/ui/MotivatingQuotes'
+import StreakTracker from '@/components/ui/StreakTracker'
 import { JobApplication, UserProfile } from '@/types/job'
 import AnimatedCounter from '@/components/ui/AnimatedCounter'
 import { Briefcase, TrendingUp, MessageSquare, CheckCircle2, XCircle, LogOut } from 'lucide-react'
@@ -36,9 +37,55 @@ export default async function DashboardPage() {
   const { data: jobs } = await supabase
     .from('job_applications')
     .select('*')
+    .order('date_applied', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false })
 
   const j = jobs || []
+  
+  // Calculate Streak
+  let streak = 0
+  if (j.length > 0) {
+    const appliedDates = Array.from(new Set(
+      j.map(x => x.date_applied).filter(Boolean)
+    )).sort((a, b) => b!.localeCompare(a!))
+
+    const formatYMD = (d: Date) => {
+      const offset = d.getTimezoneOffset()
+      const local = new Date(d.getTime() - (offset * 60 * 1000))
+      return local.toISOString().split('T')[0]
+    }
+    
+    const today = new Date()
+    const dToday = formatYMD(today)
+    
+    const yesterday = new Date(today)
+    yesterday.setDate(yesterday.getDate() - 1)
+    const dYesterday = formatYMD(yesterday)
+
+    let currentDateToCheck = new Date(today)
+    
+    if (appliedDates.includes(dToday)) {
+      streak = 1
+      currentDateToCheck = new Date(yesterday)
+    } else if (appliedDates.includes(dYesterday)) {
+      streak = 1
+      currentDateToCheck = new Date(today)
+      currentDateToCheck.setDate(currentDateToCheck.getDate() - 2)
+    }
+
+    if (streak > 0) {
+      while(true) {
+        const dCheck = formatYMD(currentDateToCheck)
+        if (appliedDates.includes(dCheck)) {
+          streak++
+          currentDateToCheck.setDate(currentDateToCheck.getDate() - 1)
+        } else {
+          break
+        }
+      }
+    }
+  }
+
   const stats = {
     total:        j.length,
     applied:      j.filter(x => x.status === 'Applied').length,
@@ -74,17 +121,23 @@ export default async function DashboardPage() {
 
       <main style={{ maxWidth: 1280, margin: '0 auto', padding: '44px 32px' }}>
 
-        {/* ── GREETING ── */}
-        <div className="fade-up" style={{ marginBottom: 40 }}>
-          <h1 className="serif" style={{ fontSize: 'clamp(32px, 4vw, 52px)', color: 'var(--ink)', fontWeight: 400, marginBottom: 6 }}>
-            {getGreeting()}, <em style={{ color: 'var(--accent)' }}>{displayName}</em>.
-          </h1>
-          <p style={{ fontSize: 14, color: 'var(--ink-3)' }}>
-            {j.length === 0
-              ? "Let's track your first application today."
-              : `${stats.interviewing} interview${stats.interviewing !== 1 ? 's' : ''} in progress · ${j.length} total`}
-          </p>
-          <MotivatingQuotes />
+        {/* ── GREETING & STREAK ── */}
+        <div className="fade-up" style={{ marginBottom: 40, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 24 }}>
+          <div>
+            <h1 className="serif" style={{ fontSize: 'clamp(32px, 4vw, 52px)', color: 'var(--ink)', fontWeight: 400, marginBottom: 6 }}>
+              {getGreeting()}, <em style={{ color: 'var(--accent)' }}>{displayName}</em>.
+            </h1>
+            <p style={{ fontSize: 14, color: 'var(--ink-3)' }}>
+              {j.length === 0
+                ? "Let's track your first application today."
+                : `${stats.interviewing} interview${stats.interviewing !== 1 ? 's' : ''} in progress · ${j.length} total`}
+            </p>
+            <MotivatingQuotes />
+          </div>
+          
+          <div style={{ marginTop: 12 }}>
+            <StreakTracker streak={streak} />
+          </div>
         </div>
 
         {/* ── STATS ── */}
