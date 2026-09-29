@@ -113,11 +113,11 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
                         {job.role}
                       </div>
 
-                      <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', display: 'flex', alignItems: 'center', height: '100%' }}>
+                      <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', display: 'flex', alignItems: 'center', height: '100%', overflow: 'hidden' }}>
                         {job.job_id ? (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--accent)', background: 'var(--accent-bg)', padding: '2px 8px', borderRadius: 4, fontWeight: 500, whiteSpace: 'nowrap' }}>
-                            <Hash size={10} />
-                            {job.job_id}
+                          <span title={job.job_id} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--accent)', background: 'var(--accent-bg)', padding: '2px 8px', borderRadius: 4, fontWeight: 500, overflow: 'hidden', maxWidth: '100%' }}>
+                            <Hash size={10} style={{ flexShrink: 0 }} />
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{job.job_id}</span>
                           </span>
                         ) : (
                           <span style={{ fontSize: 12, color: 'var(--ink-4)' }}>-</span>
