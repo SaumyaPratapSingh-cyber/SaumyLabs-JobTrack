@@ -51,12 +51,34 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
   const [editingJob, setEditingJob] = useState<JobApplication | null>(null)
   const [search, setSearch] = useState('')
   const [activeFilter, setActiveFilter] = useState<JobStatus | 'All'>('All')
+  const [dateFilter, setDateFilter] = useState('All Time')
 
   useEffect(() => { setLocalJobs(jobs) }, [jobs])
 
   // Filter + search logic
   const visibleJobs = useMemo(() => {
     let filtered = localJobs
+
+    if (dateFilter !== 'All Time') {
+      const now = new Date()
+      let cutoff = new Date(0)
+      if (dateFilter === 'Today') {
+        cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      } else if (dateFilter === 'Last 7 Days') {
+        cutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+      } else if (dateFilter === 'Last 30 Days') {
+        cutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+      } else if (dateFilter === 'This Month') {
+        cutoff = new Date(now.getFullYear(), now.getMonth(), 1)
+      } else if (dateFilter === 'This Year') {
+        cutoff = new Date(now.getFullYear(), 0, 1)
+      }
+      filtered = filtered.filter(j => {
+        if (!j.date_applied) return false
+        return new Date(j.date_applied) >= cutoff
+      })
+    }
+
     if (activeFilter !== 'All') {
       filtered = filtered.filter(j => j.status === activeFilter)
     }
@@ -69,7 +91,7 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
       )
     }
     return filtered
-  }, [localJobs, search, activeFilter])
+  }, [localJobs, search, activeFilter, dateFilter])
 
   const handleStatus = async (id: string, status: JobStatus) => {
     setUpdating(id)
@@ -103,39 +125,64 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
       {/* ── SEARCH & FILTER BAR ── */}
       <div className="card" style={{ background: 'var(--surface)', marginBottom: 12, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         
-        {/* Search input */}
-        <div style={{ position: 'relative' }}>
-          <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)', pointerEvents: 'none' }} />
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search by company, role, or job ID…"
+        {/* Search input + Date Filter */}
+        <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)', pointerEvents: 'none' }} />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search by company, role, or job ID…"
+              style={{
+                width: '100%',
+                paddingLeft: 36,
+                paddingRight: search ? 36 : 12,
+                paddingTop: 9,
+                paddingBottom: 9,
+                border: '1px solid var(--border)',
+                borderRadius: 8,
+                background: 'var(--bg)',
+                color: 'var(--ink)',
+                fontSize: 13,
+                outline: 'none',
+                boxSizing: 'border-box',
+                transition: 'border-color 150ms',
+              }}
+              onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+              onBlur={e => e.target.style.borderColor = 'var(--border)'}
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', display: 'flex', padding: 2 }}
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
+
+          <select
+            value={dateFilter}
+            onChange={e => setDateFilter(e.target.value)}
             style={{
-              width: '100%',
-              paddingLeft: 36,
-              paddingRight: search ? 36 : 12,
-              paddingTop: 9,
-              paddingBottom: 9,
+              padding: '9px 12px',
               border: '1px solid var(--border)',
               borderRadius: 8,
               background: 'var(--bg)',
               color: 'var(--ink)',
               fontSize: 13,
               outline: 'none',
-              boxSizing: 'border-box',
-              transition: 'border-color 150ms',
+              cursor: 'pointer',
+              minWidth: 140,
             }}
-            onFocus={e => e.target.style.borderColor = 'var(--accent)'}
-            onBlur={e => e.target.style.borderColor = 'var(--border)'}
-          />
-          {search && (
-            <button
-              onClick={() => setSearch('')}
-              style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', display: 'flex', padding: 2 }}
-            >
-              <X size={13} />
-            </button>
-          )}
+          >
+            <option value="All Time">All Time</option>
+            <option value="Today">Today</option>
+            <option value="Last 7 Days">Last 7 Days</option>
+            <option value="Last 30 Days">Last 30 Days</option>
+            <option value="This Month">This Month</option>
+            <option value="This Year">This Year</option>
+          </select>
         </div>
 
         {/* Status filter pills */}
@@ -196,10 +243,10 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
           <div style={{ fontSize: 40, marginBottom: 16 }}>🔍</div>
           <h3 className="serif" style={{ fontSize: 22, color: 'var(--ink)', marginBottom: 8, fontWeight: 400 }}>No results found</h3>
           <p style={{ fontSize: 14, color: 'var(--ink-2)' }}>
-            {search ? `No applications matching "${search}"` : `No applications with status "${activeFilter}"`}
+            No matching applications found.
           </p>
           <button
-            onClick={() => { setSearch(''); setActiveFilter('All') }}
+            onClick={() => { setSearch(''); setActiveFilter('All'); setDateFilter('All Time'); }}
             className="btn-ghost"
             style={{ marginTop: 16, fontSize: 13 }}
           >
