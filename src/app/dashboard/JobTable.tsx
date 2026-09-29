@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { updateJobStatus, deleteJobApplication } from '@/app/dashboard/actions'
 import { JobApplication, JobStatus } from '@/types/job'
-import { Trash2, Edit2, Hash, ExternalLink } from 'lucide-react'
+import { Trash2, Edit2, Hash, ExternalLink, Search, X } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import EditJobModal from './EditJobModal'
 
@@ -49,8 +49,27 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
   const [updating, setUpdating] = useState<string | null>(null)
   const [localJobs, setLocalJobs] = useState(jobs)
   const [editingJob, setEditingJob] = useState<JobApplication | null>(null)
+  const [search, setSearch] = useState('')
+  const [activeFilter, setActiveFilter] = useState<JobStatus | 'All'>('All')
 
   useEffect(() => { setLocalJobs(jobs) }, [jobs])
+
+  // Filter + search logic
+  const visibleJobs = useMemo(() => {
+    let filtered = localJobs
+    if (activeFilter !== 'All') {
+      filtered = filtered.filter(j => j.status === activeFilter)
+    }
+    if (search.trim()) {
+      const q = search.trim().toLowerCase()
+      filtered = filtered.filter(j =>
+        j.company_name?.toLowerCase().includes(q) ||
+        j.role?.toLowerCase().includes(q) ||
+        j.job_id?.toLowerCase().includes(q)
+      )
+    }
+    return filtered
+  }, [localJobs, search, activeFilter])
 
   const handleStatus = async (id: string, status: JobStatus) => {
     setUpdating(id)
@@ -61,7 +80,7 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
   }
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation() // Prevent row click
+    e.stopPropagation()
     if (!confirm('Remove this application?')) return
     setUpdating(id)
     setLocalJobs(p => p.filter(j => j.id !== id))
@@ -71,124 +90,230 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
 
   const HEADS = ['Company', 'Role', 'Job ID', 'Date', 'Location', 'Salary', 'Notes', 'Status', '']
 
-  if (!loading && localJobs.length === 0) return (
-    <div className="card" style={{ padding: '72px 40px', textAlign: 'center', background: 'var(--surface)' }}>
-      <div style={{ fontSize: 52, marginBottom: 20 }}>🗂️</div>
-      <h3 className="serif" style={{ fontSize: 26, color: 'var(--ink)', marginBottom: 10, fontWeight: 400 }}>No applications yet</h3>
-      <p style={{ fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.65, maxWidth: 320, margin: '0 auto' }}>
-        Click <strong>Add Application</strong> and paste any job email.<br />
-        <span style={{ color: 'var(--accent)' }}>AI handles the rest. You&apos;ve got this. ✦</span>
-      </p>
-    </div>
-  )
+  const FILTER_TABS: (JobStatus | 'All')[] = ['All', ...ALL_STATUSES]
+
+  const filterCounts = useMemo(() => {
+    const counts: Record<string, number> = { All: localJobs.length }
+    ALL_STATUSES.forEach(s => { counts[s] = localJobs.filter(j => j.status === s).length })
+    return counts
+  }, [localJobs])
 
   return (
     <>
-      <div className="card" style={{ overflow: 'hidden', background: 'var(--surface)' }}>
-        <div style={{ overflowX: 'auto' }}>
-          <div style={{ minWidth: 1100 }}>
-            {/* Header */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(140px, 1.5fr) minmax(160px, 1.5fr) minmax(90px, 1fr) minmax(100px, 1fr) minmax(110px, 1fr) minmax(100px, 1fr) minmax(160px, 1.5fr) minmax(120px, 1.2fr) 90px', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' }}>
-              {HEADS.map((h, i) => (
-                <div key={i} style={{ padding: '12px 16px', fontSize: 10, fontWeight: 600, color: 'var(--ink-3)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap', borderRight: i < 8 ? '1px solid var(--border)' : 'none' }}>
-                  {h}
-                </div>
-              ))}
-            </div>
+      {/* ── SEARCH & FILTER BAR ── */}
+      <div className="card" style={{ background: 'var(--surface)', marginBottom: 12, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        
+        {/* Search input */}
+        <div style={{ position: 'relative' }}>
+          <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)', pointerEvents: 'none' }} />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search by company, role, or job ID…"
+            style={{
+              width: '100%',
+              paddingLeft: 36,
+              paddingRight: search ? 36 : 12,
+              paddingTop: 9,
+              paddingBottom: 9,
+              border: '1px solid var(--border)',
+              borderRadius: 8,
+              background: 'var(--bg)',
+              color: 'var(--ink)',
+              fontSize: 13,
+              outline: 'none',
+              boxSizing: 'border-box',
+              transition: 'border-color 150ms',
+            }}
+            onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+            onBlur={e => e.target.style.borderColor = 'var(--border)'}
+          />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', display: 'flex', padding: 2 }}
+            >
+              <X size={13} />
+            </button>
+          )}
+        </div>
 
-            {/* Body */}
-            <div>
-              {loading
-                ? [1,2,3].map(i => <SkeletonRow key={i} />)
-                : localJobs.map((job, i) => {
-                  const st = STATUS_STYLE[job.status as JobStatus] ?? STATUS_STYLE.Applied
-                  return (
-                    <div key={job.id} onClick={() => setEditingJob(job)} className="job-row row-in" style={{ display: 'grid', gridTemplateColumns: 'minmax(140px, 1.5fr) minmax(160px, 1.5fr) minmax(90px, 1fr) minmax(100px, 1fr) minmax(110px, 1fr) minmax(100px, 1fr) minmax(160px, 1.5fr) minmax(120px, 1.2fr) 90px', borderBottom: '1px solid var(--border)', animationDelay: `${i * 45}ms`, opacity: updating === job.id ? 0.5 : 1, transition: 'opacity 200ms, background 150ms', alignItems: 'center', cursor: 'pointer' }}>
-                      <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10, height: '100%' }}>
-                        <CompanyFavicon company={job.company_name} />
-                        <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job.company_name}</span>
-                      </div>
-                      
-                      <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.4, wordBreak: 'break-word', display: 'flex', alignItems: 'center', height: '100%' }}>
-                        {job.role}
-                      </div>
+        {/* Status filter pills */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {FILTER_TABS.map(tab => {
+            const st = tab !== 'All' ? STATUS_STYLE[tab] : null
+            const isActive = activeFilter === tab
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveFilter(tab)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '5px 12px',
+                  borderRadius: 99,
+                  fontSize: 12,
+                  fontWeight: 500,
+                  border: isActive
+                    ? `1.5px solid ${st?.color ?? 'var(--ink)'}`
+                    : '1.5px solid var(--border)',
+                  background: isActive
+                    ? (st?.bg ?? 'var(--surface-2)')
+                    : 'transparent',
+                  color: isActive
+                    ? (st?.color ?? 'var(--ink)')
+                    : 'var(--ink-3)',
+                  cursor: 'pointer',
+                  transition: 'all 150ms',
+                }}
+              >
+                {st && isActive && (
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: st.color, display: 'inline-block', flexShrink: 0 }} />
+                )}
+                {tab}
+                <span style={{
+                  fontSize: 10,
+                  fontWeight: 600,
+                  background: isActive ? 'rgba(0,0,0,0.1)' : 'var(--border)',
+                  color: isActive ? (st?.color ?? 'var(--ink)') : 'var(--ink-3)',
+                  borderRadius: 99,
+                  padding: '1px 6px',
+                  minWidth: 18,
+                  textAlign: 'center',
+                }}>
+                  {filterCounts[tab] ?? 0}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
 
-                      <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', display: 'flex', alignItems: 'center', height: '100%', overflow: 'hidden' }}>
-                        {job.job_id ? (
-                          <span title={job.job_id} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--accent)', background: 'var(--accent-bg)', padding: '2px 8px', borderRadius: 4, fontWeight: 500, overflow: 'hidden', maxWidth: '100%' }}>
-                            <Hash size={10} style={{ flexShrink: 0 }} />
-                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{job.job_id}</span>
-                          </span>
-                        ) : (
-                          <span style={{ fontSize: 12, color: 'var(--ink-4)' }}>-</span>
-                        )}
-                      </div>
+      {/* ── TABLE ── */}
+      {!loading && visibleJobs.length === 0 ? (
+        <div className="card" style={{ padding: '60px 40px', textAlign: 'center', background: 'var(--surface)' }}>
+          <div style={{ fontSize: 40, marginBottom: 16 }}>🔍</div>
+          <h3 className="serif" style={{ fontSize: 22, color: 'var(--ink)', marginBottom: 8, fontWeight: 400 }}>No results found</h3>
+          <p style={{ fontSize: 14, color: 'var(--ink-2)' }}>
+            {search ? `No applications matching "${search}"` : `No applications with status "${activeFilter}"`}
+          </p>
+          <button
+            onClick={() => { setSearch(''); setActiveFilter('All') }}
+            className="btn-ghost"
+            style={{ marginTop: 16, fontSize: 13 }}
+          >
+            Clear filters
+          </button>
+        </div>
+      ) : (
+        <div className="card" style={{ overflow: 'hidden', background: 'var(--surface)' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <div style={{ minWidth: 1100 }}>
+              {/* Header */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(140px, 1.5fr) minmax(160px, 1.5fr) minmax(90px, 1fr) minmax(100px, 1fr) minmax(110px, 1fr) minmax(100px, 1fr) minmax(160px, 1.5fr) minmax(120px, 1.2fr) 90px', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' }}>
+                {HEADS.map((h, i) => (
+                  <div key={i} style={{ padding: '12px 16px', fontSize: 10, fontWeight: 600, color: 'var(--ink-3)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap', borderRight: i < 8 ? '1px solid var(--border)' : 'none' }}>
+                    {h}
+                  </div>
+                ))}
+              </div>
 
-                      <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', fontSize: 12, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', height: '100%' }}>
-                        {job.date_applied ? new Date(job.date_applied).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
-                      </div>
-
-                      <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', fontSize: 13, color: 'var(--ink-2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', height: '100%' }}>
-                        {job.location || '-'}
-                      </div>
-
-                      <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', fontSize: 12, color: 'var(--ink-2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', height: '100%' }}>
-                        {job.salary_info || '-'}
-                      </div>
-
-                      <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', fontSize: 12, color: 'var(--ink-3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', height: '100%' }}>
-                        {job.notes || '-'}
-                      </div>
-
-                      <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', display: 'flex', alignItems: 'center', height: '100%' }} onClick={e => e.stopPropagation()}>
-                        <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
-                          <span className="status-pill" style={{ color: st.color, background: st.bg, width: 'fit-content' }}>
-                            <span className="status-dot" style={{ background: st.color }} />
-                            {job.status}
-                          </span>
-                          <select value={job.status} onChange={e => handleStatus(job.id, e.target.value as JobStatus)}
-                            disabled={updating === job.id}
-                            style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}>
-                            {ALL_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                          </select>
+              {/* Body */}
+              <div>
+                {loading
+                  ? [1,2,3].map(i => <SkeletonRow key={i} />)
+                  : visibleJobs.map((job, i) => {
+                    const st = STATUS_STYLE[job.status as JobStatus] ?? STATUS_STYLE.Applied
+                    return (
+                      <div key={job.id} onClick={() => setEditingJob(job)} className="job-row row-in" style={{ display: 'grid', gridTemplateColumns: 'minmax(140px, 1.5fr) minmax(160px, 1.5fr) minmax(90px, 1fr) minmax(100px, 1fr) minmax(110px, 1fr) minmax(100px, 1fr) minmax(160px, 1.5fr) minmax(120px, 1.2fr) 90px', borderBottom: '1px solid var(--border)', animationDelay: `${i * 45}ms`, opacity: updating === job.id ? 0.5 : 1, transition: 'opacity 200ms, background 150ms', alignItems: 'center', cursor: 'pointer' }}>
+                        <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10, height: '100%' }}>
+                          <CompanyFavicon company={job.company_name} />
+                          <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job.company_name}</span>
                         </div>
-                      </div>
+                        
+                        <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.4, wordBreak: 'break-word', display: 'flex', alignItems: 'center', height: '100%' }}>
+                          {job.role}
+                        </div>
 
-                      <div style={{ padding: '12px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, height: '100%' }}>
-                        {job.job_url ? (
-                          <a href={job.job_url} target="_blank" rel="noopener noreferrer"
-                            onClick={e => e.stopPropagation()}
-                            style={{ color: 'var(--ink-4)', transition: 'color 150ms', display: 'flex', alignItems: 'center' }}
+                        <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', display: 'flex', alignItems: 'center', height: '100%', overflow: 'hidden' }}>
+                          {job.job_id ? (
+                            <span title={job.job_id} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--accent)', background: 'var(--accent-bg)', padding: '2px 8px', borderRadius: 4, fontWeight: 500, overflow: 'hidden', maxWidth: '100%' }}>
+                              <Hash size={10} style={{ flexShrink: 0 }} />
+                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{job.job_id}</span>
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: 12, color: 'var(--ink-4)' }}>-</span>
+                          )}
+                        </div>
+
+                        <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', fontSize: 12, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', height: '100%' }}>
+                          {job.date_applied ? new Date(job.date_applied).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+                        </div>
+
+                        <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', fontSize: 13, color: 'var(--ink-2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', height: '100%' }}>
+                          {job.location || '-'}
+                        </div>
+
+                        <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', fontSize: 12, color: 'var(--ink-2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', height: '100%' }}>
+                          {job.salary_info || '-'}
+                        </div>
+
+                        <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', fontSize: 12, color: 'var(--ink-3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', height: '100%' }}>
+                          {job.notes || '-'}
+                        </div>
+
+                        <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', display: 'flex', alignItems: 'center', height: '100%' }} onClick={e => e.stopPropagation()}>
+                          <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
+                            <span className="status-pill" style={{ color: st.color, background: st.bg, width: 'fit-content' }}>
+                              <span className="status-dot" style={{ background: st.color }} />
+                              {job.status}
+                            </span>
+                            <select value={job.status} onChange={e => handleStatus(job.id, e.target.value as JobStatus)}
+                              disabled={updating === job.id}
+                              style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}>
+                              {ALL_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                          </div>
+                        </div>
+
+                        <div style={{ padding: '12px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, height: '100%' }}>
+                          {job.job_url ? (
+                            <a href={job.job_url} target="_blank" rel="noopener noreferrer"
+                              onClick={e => e.stopPropagation()}
+                              style={{ color: 'var(--ink-4)', transition: 'color 150ms', display: 'flex', alignItems: 'center' }}
+                              onMouseOver={e => (e.currentTarget.style.color = 'var(--accent)')}
+                              onMouseOut={e => (e.currentTarget.style.color = 'var(--ink-4)')}
+                              title="Open Job Link">
+                              <ExternalLink size={13} />
+                            </a>
+                          ) : (
+                            <span style={{ width: 13 }} />
+                          )}
+                          <button onClick={e => { e.stopPropagation(); setEditingJob(job); }}
+                            style={{ color: 'var(--ink-4)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: 'color 150ms', display: 'flex', alignItems: 'center' }}
                             onMouseOver={e => (e.currentTarget.style.color = 'var(--accent)')}
                             onMouseOut={e => (e.currentTarget.style.color = 'var(--ink-4)')}
-                            title="Open Job Link">
-                            <ExternalLink size={13} />
-                          </a>
-                        ) : (
-                          <span style={{ width: 13 }} /> /* Spacer for alignment */
-                        )}
-                        <button onClick={e => { e.stopPropagation(); setEditingJob(job); }}
-                          style={{ color: 'var(--ink-4)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: 'color 150ms', display: 'flex', alignItems: 'center' }}
-                          onMouseOver={e => (e.currentTarget.style.color = 'var(--accent)')}
-                          onMouseOut={e => (e.currentTarget.style.color = 'var(--ink-4)')}
-                          title="Edit Details">
-                          <Edit2 size={13} />
-                        </button>
-                        <button onClick={e => handleDelete(job.id, e)} disabled={updating === job.id}
-                          style={{ color: 'var(--ink-4)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: 'color 150ms', display: 'flex', alignItems: 'center' }}
-                          onMouseOver={e => (e.currentTarget.style.color = 'var(--s-rejected)')}
-                          onMouseOut={e => (e.currentTarget.style.color = 'var(--ink-4)')}
-                          title="Delete">
-                          <Trash2 size={13} />
-                        </button>
+                            title="Edit Details">
+                            <Edit2 size={13} />
+                          </button>
+                          <button onClick={e => handleDelete(job.id, e)} disabled={updating === job.id}
+                            style={{ color: 'var(--ink-4)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: 'color 150ms', display: 'flex', alignItems: 'center' }}
+                            onMouseOver={e => (e.currentTarget.style.color = 'var(--s-rejected)')}
+                            onMouseOut={e => (e.currentTarget.style.color = 'var(--ink-4)')}
+                            title="Delete">
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  )
-                })}
+                    )
+                  })}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
+
       {editingJob && <EditJobModal job={editingJob} onClose={() => setEditingJob(null)} />}
     </>
   )
