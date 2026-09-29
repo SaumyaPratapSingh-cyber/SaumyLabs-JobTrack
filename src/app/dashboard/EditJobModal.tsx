@@ -48,7 +48,7 @@ export default function EditJobModal({ job, onClose }: { job: JobApplication; on
     <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(28,24,20,0.3)', backdropFilter: 'blur(3px)' }} />
       
-      <div className="card fade-up" style={{ position: 'relative', width: '100%', maxWidth: 540, padding: 28, margin: 16, maxHeight: '90vh', overflowY: 'auto' }}>
+      <div className="card fade-up" style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 540, padding: 28, margin: 16, maxHeight: '90vh', overflowY: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
           <div>
             <h2 className="serif" style={{ fontSize: 24, fontWeight: 400, color: 'var(--ink)' }}>Edit Application</h2>
