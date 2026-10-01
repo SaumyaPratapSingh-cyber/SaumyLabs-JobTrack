@@ -7,10 +7,12 @@ import { Trash2, Edit2, Hash, ExternalLink, Search, X } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import EditJobModal from './EditJobModal'
 
-const ALL_STATUSES: JobStatus[] = ['Applied', 'Interviewing', 'Offer', 'Rejected', 'Withdrawn']
+const ALL_STATUSES: JobStatus[] = ['Applied', 'Shortlisted', 'Assessment', 'Interviewing', 'Offer', 'Rejected', 'Withdrawn']
 
 const STATUS_STYLE: Record<JobStatus, { color: string; bg: string }> = {
   Applied:      { color: 'var(--s-applied)',      bg: 'rgba(74,127,165,0.08)' },
+  Shortlisted:  { color: '#8b5cf6',               bg: 'rgba(139,92,246,0.09)' },
+  Assessment:   { color: '#f59e0b',               bg: 'rgba(245,158,11,0.09)' },
   Interviewing: { color: 'var(--s-interviewing)', bg: 'rgba(193,126,74,0.09)' },
   Offer:        { color: 'var(--s-offer)',         bg: 'rgba(74,140,92,0.09)' },
   Rejected:     { color: 'var(--s-rejected)',      bg: 'rgba(160,64,64,0.08)' },

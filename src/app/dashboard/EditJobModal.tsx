@@ -164,7 +164,7 @@ export default function EditJobModal({ job, onClose }: { job: JobApplication; on
               onChange={e => setData(d => ({ ...d, status: e.target.value as JobStatus }))}
               className="field"
             >
-              {['Applied', 'Interviewing', 'Offer', 'Rejected', 'Withdrawn'].map(s => (
+              {['Applied', 'Shortlisted', 'Assessment', 'Interviewing', 'Offer', 'Rejected', 'Withdrawn'].map(s => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
