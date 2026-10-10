@@ -195,8 +195,11 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
             return (
               <button
                 key={tab}
+                type="button"
                 onClick={() => setActiveFilter(tab)}
                 style={{
+                  position: 'relative',
+                  zIndex: 10,
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 6,
@@ -320,7 +323,7 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
                             </span>
                             <select value={job.status} onChange={e => handleStatus(job.id, e.target.value as JobStatus)}
                               disabled={updating === job.id}
-                              style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}>
+                              style={{ position: 'absolute', zIndex: 10, inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}>
                               {ALL_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
                           </div>
