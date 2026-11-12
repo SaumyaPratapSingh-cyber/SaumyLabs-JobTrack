@@ -152,7 +152,7 @@ export default async function DashboardPage() {
           <div style={{ display: 'flex', gap: 10 }}>
             <ImportModal />
             <ExportButton jobs={j as JobApplication[]} />
-            <AddJobModal />
+            <AddJobModal existingJobs={j as JobApplication[]} />
           </div>
         </div>
 

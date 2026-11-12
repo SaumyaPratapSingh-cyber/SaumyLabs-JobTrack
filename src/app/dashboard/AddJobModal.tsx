@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { addJobApplication } from './actions'
-import { JobStatus } from '@/types/job'
-import { X, Sparkles, ArrowLeft, Save } from 'lucide-react'
+import { JobStatus, JobApplication } from '@/types/job'
+import { createClient } from '@/utils/supabase/client'
+import { X, Sparkles, ArrowLeft, Save, AlertTriangle } from 'lucide-react'
 
 interface ParsedJob {
   company_name: string; role: string; date_applied?: string; status: JobStatus
@@ -23,7 +24,7 @@ const FIELDS = [
   { key: 'notes',        label: 'Notes',   placeholder: 'Recruiter, deadline…' },
 ]
 
-export default function AddJobModal() {
+export default function AddJobModal({ existingJobs = [] }: { existingJobs?: JobApplication[] }) {
   const [mounted, setMounted] = useState(false)
   const [open, setOpen] = useState(false)
   const [text, setText] = useState('')
@@ -31,8 +32,74 @@ export default function AddJobModal() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [step, setStep] = useState(0)
+  const [jobList, setJobList] = useState<JobApplication[]>(existingJobs)
 
   useEffect(() => setMounted(true), [])
+
+  useEffect(() => {
+    setJobList(existingJobs)
+  }, [existingJobs])
+
+  // Fallback: fetch existing jobs if not passed via props
+  useEffect(() => {
+    if (open && jobList.length === 0) {
+      const supabase = createClient()
+      supabase.from('job_applications').select('*').then(({ data }) => {
+        if (data) setJobList(data as JobApplication[])
+      })
+    }
+  }, [open, jobList.length])
+
+  // Check if extracted application is a duplicate of an existing one
+  const duplicateInfo = useMemo(() => {
+    if (!parsed || jobList.length === 0) return { isDuplicate: false }
+
+    const clean = (s?: string | null) => (s || '').trim().toLowerCase().replace(/\s+/g, ' ')
+    const isBlank = (s?: string | null) => {
+      if (!s) return true
+      const c = s.trim().toLowerCase()
+      return c === '' || c === '-' || c === 'n/a' || c === 'na' || c === 'none'
+    }
+    const cleanUrl = (s?: string | null) => (s || '').trim().toLowerCase().replace(/\/+$/, '')
+
+    for (const job of jobList) {
+      // 1. Same Job ID (if present and valid)
+      const hasJobId = !isBlank(parsed.job_id) && !isBlank(job.job_id)
+      if (hasJobId && clean(parsed.job_id) === clean(job.job_id)) {
+        return {
+          isDuplicate: true,
+          match: job,
+          reason: `Same Job ID (${job.job_id})`,
+        }
+      }
+
+      // 2. Same Company AND Same Role (same job, not same company alone!)
+      const hasCompAndRole = !isBlank(parsed.company_name) && !isBlank(parsed.role) && !isBlank(job.company_name) && !isBlank(job.role)
+      if (
+        hasCompAndRole &&
+        clean(parsed.company_name) === clean(job.company_name) &&
+        clean(parsed.role) === clean(job.role)
+      ) {
+        return {
+          isDuplicate: true,
+          match: job,
+          reason: `Same Role at ${job.company_name}`,
+        }
+      }
+
+      // 3. Same Job URL (if present and valid)
+      const hasUrl = !isBlank(parsed.job_url) && !isBlank(job.job_url)
+      if (hasUrl && cleanUrl(parsed.job_url) === cleanUrl(job.job_url)) {
+        return {
+          isDuplicate: true,
+          match: job,
+          reason: 'Same Application URL',
+        }
+      }
+    }
+
+    return { isDuplicate: false }
+  }, [parsed, jobList])
 
   const handleParse = async () => {
     if (!text.trim()) return
@@ -127,9 +194,62 @@ export default function AddJobModal() {
             {/* Step 2 — Review */}
             {step === 2 && parsed && (
               <div className="fade-in">
-                <p style={{ fontSize: 13, color: 'var(--s-offer)', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span>✅</span> Extracted! Review and edit before saving.
-                </p>
+                {/* Duplicate Alert Banner if duplicate is detected */}
+                {duplicateInfo.isDuplicate && duplicateInfo.match ? (
+                  <div
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.08)',
+                      border: '1.5px solid rgba(239, 68, 68, 0.35)',
+                      borderRadius: 12,
+                      padding: '14px 16px',
+                      marginBottom: 18,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 8,
+                      animation: 'fadeIn 200ms ease',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#dc2626', fontWeight: 600, fontSize: 14 }}>
+                      <AlertTriangle size={18} />
+                      <span>Duplicate Application Detected!</span>
+                    </div>
+                    <p style={{ fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.5, margin: 0 }}>
+                      You have already applied to <strong>{duplicateInfo.match.company_name}</strong> for <strong>{duplicateInfo.match.role}</strong>
+                      {duplicateInfo.match.job_id ? ` (Job ID: ${duplicateInfo.match.job_id})` : ''}.
+                    </p>
+                    <div
+                      style={{
+                        fontSize: 12,
+                        color: 'var(--ink-3)',
+                        display: 'flex',
+                        gap: 14,
+                        flexWrap: 'wrap',
+                        background: 'var(--surface)',
+                        padding: '8px 12px',
+                        borderRadius: 8,
+                        border: '1px solid var(--border)',
+                      }}
+                    >
+                      <span><strong>Status:</strong> {duplicateInfo.match.status}</span>
+                      {duplicateInfo.match.date_applied && (
+                        <span>
+                          <strong>Applied on:</strong>{' '}
+                          {new Date(duplicateInfo.match.date_applied).toLocaleDateString('en-IN', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          })}
+                        </span>
+                      )}
+                      <span><strong>Match:</strong> {duplicateInfo.reason}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <p style={{ fontSize: 13, color: 'var(--s-offer)', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>✅</span> Extracted! Review and edit before saving.
+                  </p>
+                )}
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                   {FIELDS.map(({ key, label, placeholder }) => (
                     <div key={key}>
@@ -144,7 +264,7 @@ export default function AddJobModal() {
                   <div>
                     <label className="label">Status</label>
                     <select value={parsed.status} onChange={e => setParsed({ ...parsed, status: e.target.value as JobStatus })} className="field" style={{ fontSize: 13, padding: '9px 12px' }}>
-                      {['Applied','Interviewing','Offer','Rejected','Withdrawn'].map(s => <option key={s} value={s}>{s}</option>)}
+                      {['Applied', 'Shortlisted', 'Assessment', 'Interviewing', 'Offer', 'Rejected', 'Withdrawn'].map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </div>
                 </div>
@@ -155,8 +275,19 @@ export default function AddJobModal() {
                   </button>
                   <div style={{ display: 'flex', gap: 10 }}>
                     <button onClick={handleClose} className="btn-ghost" style={{ padding: '9px 16px' }}>Cancel</button>
-                    <button onClick={handleSave} disabled={loading} className="btn-primary" style={{ opacity: loading ? 0.6 : 1 }}>
-                      <Save size={14} /> {loading ? 'Saving…' : 'Save Application'}
+                    <button
+                      onClick={handleSave}
+                      disabled={loading}
+                      className={duplicateInfo.isDuplicate ? 'btn-ghost' : 'btn-primary'}
+                      style={{
+                        border: duplicateInfo.isDuplicate ? '1.5px solid #dc2626' : undefined,
+                        color: duplicateInfo.isDuplicate ? '#dc2626' : undefined,
+                        background: duplicateInfo.isDuplicate ? 'rgba(239, 68, 68, 0.08)' : undefined,
+                        opacity: loading ? 0.6 : 1,
+                        fontWeight: 600,
+                      }}
+                    >
+                      <Save size={14} /> {loading ? 'Saving…' : duplicateInfo.isDuplicate ? 'Save Anyway (Duplicate)' : 'Save Application'}
                     </button>
                   </div>
                 </div>
