@@ -128,14 +128,40 @@ export default async function DashboardPage() {
         </div>
 
         {/* ── STATS ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14, marginBottom: 32 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 28 }}>
           {STATS.map(({ key, label, icon: Icon, color }, i) => (
-            <div key={key} className="card fade-up" style={{ padding: '20px 20px', animationDelay: `${i * 60}ms` }}>
-              <Icon size={15} style={{ color, marginBottom: 14, opacity: 0.75 }} />
-              <div style={{ fontSize: 32, fontWeight: 600, color, lineHeight: 1, marginBottom: 6 }}>
+            <div
+              key={key}
+              className="card fade-up"
+              style={{
+                padding: '18px 20px',
+                animationDelay: `${i * 50}ms`,
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <div style={{ fontSize: 11, color: 'var(--ink-3)', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                  {label}
+                </div>
+                <div
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 7,
+                    background: `${color}14`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: color,
+                  }}
+                >
+                  <Icon size={14} />
+                </div>
+              </div>
+              <div style={{ fontSize: 32, fontWeight: 700, color: 'var(--ink)', lineHeight: 1, letterSpacing: '-0.02em' }}>
                 <AnimatedCounter value={(stats as any)[key]} />
               </div>
-              <div style={{ fontSize: 11, color: 'var(--ink-3)', fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase' }}>{label}</div>
             </div>
           ))}
         </div>

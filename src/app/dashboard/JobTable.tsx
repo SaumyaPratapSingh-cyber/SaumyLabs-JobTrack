@@ -212,8 +212,8 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
       <div className="card" style={{ background: 'var(--surface)', marginBottom: 12, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         
         {/* Search input + Date Filter */}
-        <div style={{ display: 'flex', gap: 10 }}>
-          <div style={{ position: 'relative', flex: 1 }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', flex: '1 1 240px', minWidth: 220 }}>
             <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)', pointerEvents: 'none' }} />
             <input
               value={search}
@@ -598,8 +598,8 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
         <div className="card" style={{ overflow: 'hidden', background: 'var(--surface)' }}>
           <div style={{ overflowX: 'auto' }}>
             <div style={{ minWidth: 1100 }}>
-              {/* Header */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(140px, 1.5fr) minmax(160px, 1.5fr) minmax(90px, 1fr) minmax(100px, 1fr) minmax(110px, 1fr) minmax(100px, 1fr) minmax(160px, 1.5fr) minmax(120px, 1.2fr) 90px', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' }}>
+              {/* Sticky Header */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(140px, 1.5fr) minmax(160px, 1.5fr) minmax(90px, 1fr) minmax(100px, 1fr) minmax(110px, 1fr) minmax(100px, 1fr) minmax(160px, 1.5fr) minmax(120px, 1.2fr) 90px', borderBottom: '1px solid var(--border)', background: 'rgba(250, 248, 245, 0.96)', backdropFilter: 'blur(8px)', position: 'sticky', top: 0, zIndex: 10 }}>
                 {HEADS.map((h, i) => (
                   <div key={i} style={{ padding: '12px 16px', fontSize: 10, fontWeight: 600, color: 'var(--ink-3)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap', borderRight: i < 8 ? '1px solid var(--border)' : 'none' }}>
                     {h}

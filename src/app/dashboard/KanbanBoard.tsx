@@ -85,7 +85,16 @@ export default function KanbanBoard({
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14, alignItems: 'start', overflowX: 'auto', paddingBottom: 16 }}>
+    <div
+      style={{
+        display: 'flex',
+        gap: 16,
+        alignItems: 'stretch',
+        overflowX: 'auto',
+        paddingBottom: 16,
+        scrollSnapType: 'x mandatory',
+      }}
+    >
       {KANBAN_COLUMNS.map(col => {
         const colJobs = jobs.filter(j => j.status === col.status)
         const isTarget = draggedOverCol === col.status
@@ -97,16 +106,20 @@ export default function KanbanBoard({
             onDragLeave={handleDragLeave}
             onDrop={e => handleDrop(e, col.status)}
             style={{
+              flex: '0 0 290px',
+              minWidth: 290,
+              maxWidth: 320,
+              scrollSnapAlign: 'start',
               background: isTarget ? 'var(--surface-2)' : 'var(--surface)',
               borderRadius: 14,
               border: isTarget ? `1.5px dashed ${col.color}` : '1px solid var(--border)',
               padding: '14px 12px',
-              minHeight: 460,
+              minHeight: 480,
               display: 'flex',
               flexDirection: 'column',
               gap: 10,
               transition: 'all 150ms ease',
-              boxShadow: isTarget ? '0 6px 24px rgba(0,0,0,0.06)' : 'none',
+              boxShadow: isTarget ? '0 8px 24px rgba(0,0,0,0.08)' : 'var(--shadow-xs)',
             }}
           >
             {/* Column Header */}
