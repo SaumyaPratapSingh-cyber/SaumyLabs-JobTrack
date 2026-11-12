@@ -3,9 +3,10 @@
 import { useState, useEffect, useMemo } from 'react'
 import { updateJobStatus, deleteJobApplication } from '@/app/dashboard/actions'
 import { JobApplication, JobStatus } from '@/types/job'
-import { Trash2, Edit2, Hash, ExternalLink, Search, X, Copy } from 'lucide-react'
+import { Trash2, Edit2, Hash, ExternalLink, Search, X, Copy, Clock, Table, LayoutGrid } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import EditJobModal from './EditJobModal'
+import KanbanBoard from './KanbanBoard'
 
 const ALL_STATUSES: JobStatus[] = ['Applied', 'Shortlisted', 'Assessment', 'Interviewing', 'Offer', 'Rejected', 'Withdrawn']
 
@@ -63,7 +64,14 @@ function cleanUrl(val?: string | null): string {
   return val.trim().toLowerCase().replace(/\/+$/, '')
 }
 
-type TableFilter = JobStatus | 'All' | 'Duplicates'
+function daysBetween(dateStr: string): number {
+  const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return 0
+  const diffMs = Date.now() - d.getTime()
+  return Math.floor(diffMs / (1000 * 60 * 60 * 24))
+}
+
+type TableFilter = JobStatus | 'All' | 'Duplicates' | 'NeedsFollowUp'
 
 export default function JobTable({ jobs, loading }: { jobs: JobApplication[], loading?: boolean }) {
   const [updating, setUpdating] = useState<string | null>(null)
@@ -72,8 +80,20 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
   const [search, setSearch] = useState('')
   const [activeFilter, setActiveFilter] = useState<TableFilter>('All')
   const [dateFilter, setDateFilter] = useState('All Time')
+  const [viewMode, setViewMode] = useState<'table' | 'board'>('table')
 
   useEffect(() => { setLocalJobs(jobs) }, [jobs])
+
+  // Identify stale applications (applied >= 7 days ago and still in 'Applied')
+  const staleJobIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const j of localJobs) {
+      if (j.status === 'Applied' && j.date_applied && daysBetween(j.date_applied) >= 7) {
+        ids.add(j.id)
+      }
+    }
+    return ids
+  }, [localJobs])
 
   // Detect duplicate applications: same job (Job ID, or same Company + Role, or same Job URL)
   const { duplicateJobIds, duplicateReasons } = useMemo(() => {
@@ -122,6 +142,8 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
 
     if (activeFilter === 'Duplicates') {
       filtered = filtered.filter(j => duplicateJobIds.has(j.id))
+    } else if (activeFilter === 'NeedsFollowUp') {
+      filtered = filtered.filter(j => staleJobIds.has(j.id))
     } else if (activeFilter !== 'All') {
       filtered = filtered.filter(j => j.status === activeFilter)
     }
@@ -155,7 +177,7 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
       )
     }
     return filtered
-  }, [localJobs, search, activeFilter, dateFilter, duplicateJobIds])
+  }, [localJobs, search, activeFilter, dateFilter, duplicateJobIds, staleJobIds])
 
   const handleStatus = async (id: string, status: JobStatus) => {
     setUpdating(id)
@@ -247,6 +269,56 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
             <option value="This Month">This Month</option>
             <option value="This Year">This Year</option>
           </select>
+
+          {/* View mode toggle: Table vs Kanban Board */}
+          <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg)', padding: 3, borderRadius: 8, border: '1px solid var(--border)' }}>
+            <button
+              type="button"
+              onClick={() => setViewMode('table')}
+              title="Table View"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                padding: '6px 12px',
+                borderRadius: 6,
+                fontSize: 12,
+                fontWeight: 500,
+                border: 'none',
+                background: viewMode === 'table' ? 'var(--surface)' : 'transparent',
+                color: viewMode === 'table' ? 'var(--ink)' : 'var(--ink-3)',
+                boxShadow: viewMode === 'table' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                cursor: 'pointer',
+                transition: 'all 150ms',
+              }}
+            >
+              <Table size={13} />
+              <span>Table</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('board')}
+              title="Kanban Board View"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                padding: '6px 12px',
+                borderRadius: 6,
+                fontSize: 12,
+                fontWeight: 500,
+                border: 'none',
+                background: viewMode === 'board' ? 'var(--surface)' : 'transparent',
+                color: viewMode === 'board' ? 'var(--ink)' : 'var(--ink-3)',
+                boxShadow: viewMode === 'board' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                cursor: 'pointer',
+                transition: 'all 150ms',
+              }}
+            >
+              <LayoutGrid size={13} />
+              <span>Board</span>
+            </button>
+          </div>
         </div>
 
         {/* Status filter pills */}
@@ -351,6 +423,56 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
               {duplicateJobIds.size}
             </span>
           </button>
+
+          {/* Needs Follow-Up filter tab */}
+          <button
+            type="button"
+            onClick={() => setActiveFilter(activeFilter === 'NeedsFollowUp' ? 'All' : 'NeedsFollowUp')}
+            title={staleJobIds.size > 0 ? `${staleJobIds.size} applications need follow-up (>7 days without response)` : 'No applications need follow-up'}
+            style={{
+              position: 'relative',
+              zIndex: 10,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '5px 12px',
+              borderRadius: 99,
+              fontSize: 12,
+              fontWeight: 500,
+              border: activeFilter === 'NeedsFollowUp'
+                ? '1.5px solid #D97706'
+                : staleJobIds.size > 0
+                ? '1.5px solid rgba(245, 158, 11, 0.4)'
+                : '1.5px solid var(--border)',
+              background: activeFilter === 'NeedsFollowUp'
+                ? 'rgba(245, 158, 11, 0.08)'
+                : staleJobIds.size > 0
+                ? 'rgba(245, 158, 11, 0.04)'
+                : 'transparent',
+              color: activeFilter === 'NeedsFollowUp'
+                ? '#D97706'
+                : staleJobIds.size > 0
+                ? '#D97706'
+                : 'var(--ink-3)',
+              cursor: 'pointer',
+              transition: 'all 150ms',
+            }}
+          >
+            <Clock size={12} />
+            Needs Follow-Up
+            <span style={{
+              fontSize: 10,
+              fontWeight: 600,
+              background: activeFilter === 'NeedsFollowUp' ? 'rgba(245, 158, 11, 0.15)' : 'var(--border)',
+              color: activeFilter === 'NeedsFollowUp' ? '#D97706' : 'var(--ink-3)',
+              borderRadius: 99,
+              padding: '1px 6px',
+              minWidth: 18,
+              textAlign: 'center',
+            }}>
+              {staleJobIds.size}
+            </span>
+          </button>
         </div>
       </div>
 
@@ -393,16 +515,63 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
         </div>
       )}
 
-      {/* ── TABLE ── */}
+      {/* Needs Follow-Up Notice Banner */}
+      {activeFilter === 'NeedsFollowUp' && visibleJobs.length > 0 && (
+        <div style={{
+          background: 'rgba(245, 158, 11, 0.08)',
+          border: '1px solid rgba(245, 158, 11, 0.25)',
+          borderRadius: 10,
+          padding: '10px 16px',
+          marginBottom: 12,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          fontSize: 13,
+          color: '#B45309',
+          animation: 'fadeIn 200ms ease',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Clock size={15} />
+            <span>
+              Showing <strong>{visibleJobs.length}</strong> applications applied over 7 days ago still in &ldquo;Applied&rdquo;. Recommended to follow up with recruiters.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActiveFilter('All')}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#B45309',
+              textDecoration: 'underline',
+              cursor: 'pointer',
+              fontSize: 12,
+              fontWeight: 600,
+            }}
+          >
+            View all applications
+          </button>
+        </div>
+      )}
+
+      {/* ── TABLE OR KANBAN BOARD ── */}
       {!loading && visibleJobs.length === 0 ? (
         <div className="card" style={{ padding: '60px 40px', textAlign: 'center', background: 'var(--surface)' }}>
-          <div style={{ fontSize: 40, marginBottom: 16 }}>{activeFilter === 'Duplicates' ? '✨' : '🔍'}</div>
+          <div style={{ fontSize: 40, marginBottom: 16 }}>
+            {activeFilter === 'Duplicates' ? '✨' : activeFilter === 'NeedsFollowUp' ? '🎉' : '🔍'}
+          </div>
           <h3 className="serif" style={{ fontSize: 22, color: 'var(--ink)', marginBottom: 8, fontWeight: 400 }}>
-            {activeFilter === 'Duplicates' ? 'No duplicate applications' : 'No results found'}
+            {activeFilter === 'Duplicates'
+              ? 'No duplicate applications'
+              : activeFilter === 'NeedsFollowUp'
+              ? 'No applications need follow-up'
+              : 'No results found'}
           </h3>
           <p style={{ fontSize: 14, color: 'var(--ink-2)' }}>
             {activeFilter === 'Duplicates'
               ? 'Great! All your job applications are unique with no duplicate Job IDs or roles.'
+              : activeFilter === 'NeedsFollowUp'
+              ? 'All applications are up-to-date or have received responses within the last 7 days.'
               : search
               ? `No applications matching "${search}"`
               : 'No matching applications found.'}
@@ -412,9 +581,19 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
             className="btn-ghost"
             style={{ marginTop: 16, fontSize: 13 }}
           >
-            {activeFilter === 'Duplicates' ? 'View all applications' : 'Clear filters'}
+            {activeFilter === 'Duplicates' || activeFilter === 'NeedsFollowUp' ? 'View all applications' : 'Clear filters'}
           </button>
         </div>
+      ) : viewMode === 'board' ? (
+        <KanbanBoard
+          jobs={visibleJobs}
+          onStatusChange={handleStatus}
+          onEdit={setEditingJob}
+          onDelete={handleDelete}
+          staleJobIds={staleJobIds}
+          duplicateJobIds={duplicateJobIds}
+          duplicateReasons={duplicateReasons}
+        />
       ) : (
         <div className="card" style={{ overflow: 'hidden', background: 'var(--surface)' }}>
           <div style={{ overflowX: 'auto' }}>
@@ -462,6 +641,27 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
                               }}
                             >
                               <Copy size={9} /> Duplicate
+                            </span>
+                          )}
+                          {staleJobIds.has(job.id) && (
+                            <span
+                              title={`Applied ${job.date_applied ? daysBetween(job.date_applied) : 7}+ days ago without response`}
+                              style={{
+                                fontSize: 10,
+                                fontWeight: 600,
+                                color: '#D97706',
+                                background: 'rgba(245, 158, 11, 0.09)',
+                                border: '1px solid rgba(245, 158, 11, 0.25)',
+                                padding: '2px 6px',
+                                borderRadius: 4,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 3,
+                                flexShrink: 0,
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              <Clock size={9} /> Follow-up
                             </span>
                           )}
                         </div>

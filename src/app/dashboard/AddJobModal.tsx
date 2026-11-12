@@ -170,7 +170,7 @@ export default function AddJobModal() {
 
   return (
     <>
-      <button onClick={() => setOpen(true)} className="btn-primary" style={{ gap: 7 }}>
+      <button data-add-job-btn="true" onClick={() => setOpen(true)} className="btn-primary" style={{ gap: 7 }}>
         <Sparkles size={14} /> Add Application
       </button>
       {mounted && createPortal(modalContent, document.body)}

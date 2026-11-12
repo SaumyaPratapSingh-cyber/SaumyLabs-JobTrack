@@ -1,16 +1,17 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
-import { signOut } from './actions'
 import JobTable from './JobTable'
 import AddJobModal from './AddJobModal'
 import ExportButton from './ExportButton'
-import SettingsModal from './SettingsModal'
+import ImportModal from './ImportModal'
+import AnalyticsSection from './AnalyticsSection'
+import DashboardNav from './DashboardNav'
 import MotivatingQuotes from '@/components/ui/MotivatingQuotes'
 import StreakTracker from '@/components/ui/StreakTracker'
 import TodayTracker from '@/components/ui/TodayTracker'
 import { JobApplication, UserProfile } from '@/types/job'
 import AnimatedCounter from '@/components/ui/AnimatedCounter'
-import { Briefcase, TrendingUp, MessageSquare, CheckCircle2, XCircle, LogOut } from 'lucide-react'
+import { Briefcase, TrendingUp, MessageSquare, CheckCircle2, XCircle } from 'lucide-react'
 
 const STATS = [
   { key: 'total',        label: 'Total',       icon: Briefcase,     color: 'var(--ink)' },
@@ -101,24 +102,8 @@ export default async function DashboardPage() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
 
-      {/* ── NAV ── */}
-      <header className="nav" style={{ position: 'sticky', top: 0, zIndex: 40 }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-            <div style={{ width: 24, height: 24, background: 'var(--ink)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>💼</div>
-            <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--ink)' }}>JobTrack</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ fontSize: 12, color: 'var(--ink-3)', marginRight: 6 }}>{profile?.full_name || user.email}</span>
-            <SettingsModal profile={profile} />
-            <form action={signOut}>
-              <button type="submit" className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 13px', fontSize: 12 }}>
-                <LogOut size={12} /> Sign out
-              </button>
-            </form>
-          </div>
-        </div>
-      </header>
+      {/* ── NAV WITH COMMAND PALETTE ── */}
+      <DashboardNav profile={profile} userEmail={user.email} jobs={j as JobApplication[]} />
 
       <main style={{ maxWidth: 1280, margin: '0 auto', padding: '44px 32px' }}>
 
@@ -155,6 +140,9 @@ export default async function DashboardPage() {
           ))}
         </div>
 
+        {/* ── PIPELINE ANALYTICS ── */}
+        <AnalyticsSection jobs={j as JobApplication[]} />
+
         {/* ── TABLE HEADER ── */}
         <div className="fade-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, animationDelay: '320ms' }}>
           <div>
@@ -162,6 +150,7 @@ export default async function DashboardPage() {
             <p style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 2 }}>{j.length} total · newest first</p>
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
+            <ImportModal />
             <ExportButton jobs={j as JobApplication[]} />
             <AddJobModal />
           </div>
