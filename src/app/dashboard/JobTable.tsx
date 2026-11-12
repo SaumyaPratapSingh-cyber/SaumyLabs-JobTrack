@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { updateJobStatus, deleteJobApplication } from '@/app/dashboard/actions'
 import { JobApplication, JobStatus } from '@/types/job'
-import { Trash2, Edit2, Hash, ExternalLink, Search, X } from 'lucide-react'
+import { Trash2, Edit2, Hash, ExternalLink, Search, X, Copy } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import EditJobModal from './EditJobModal'
 
@@ -47,19 +47,84 @@ function SkeletonRow() {
   )
 }
 
+function isBlankVal(val?: string | null): boolean {
+  if (!val) return true
+  const s = val.trim().toLowerCase()
+  return s === '' || s === '-' || s === 'n/a' || s === 'na' || s === 'none' || s === 'null' || s === 'undefined'
+}
+
+function cleanStr(val?: string | null): string {
+  if (!val) return ''
+  return val.trim().toLowerCase().replace(/\s+/g, ' ')
+}
+
+function cleanUrl(val?: string | null): string {
+  if (!val) return ''
+  return val.trim().toLowerCase().replace(/\/+$/, '')
+}
+
+type TableFilter = JobStatus | 'All' | 'Duplicates'
+
 export default function JobTable({ jobs, loading }: { jobs: JobApplication[], loading?: boolean }) {
   const [updating, setUpdating] = useState<string | null>(null)
   const [localJobs, setLocalJobs] = useState(jobs)
   const [editingJob, setEditingJob] = useState<JobApplication | null>(null)
   const [search, setSearch] = useState('')
-  const [activeFilter, setActiveFilter] = useState<JobStatus | 'All'>('All')
+  const [activeFilter, setActiveFilter] = useState<TableFilter>('All')
   const [dateFilter, setDateFilter] = useState('All Time')
 
   useEffect(() => { setLocalJobs(jobs) }, [jobs])
 
+  // Detect duplicate applications: same job (Job ID, or same Company + Role, or same Job URL)
+  const { duplicateJobIds, duplicateReasons } = useMemo(() => {
+    const ids = new Set<string>()
+    const reasons: Record<string, string> = {}
+
+    for (let i = 0; i < localJobs.length; i++) {
+      const a = localJobs[i]
+      for (let j = i + 1; j < localJobs.length; j++) {
+        const b = localJobs[j]
+
+        // 1. Same non-blank Job ID
+        const hasJobId = !isBlankVal(a.job_id) && !isBlankVal(b.job_id)
+        const sameJobId = hasJobId && cleanStr(a.job_id) === cleanStr(b.job_id)
+
+        // 2. Same Company AND Same Role (same job, not same company alone!)
+        const hasCompAndRole = !isBlankVal(a.company_name) && !isBlankVal(a.role) && !isBlankVal(b.company_name) && !isBlankVal(b.role)
+        const sameCompAndRole = hasCompAndRole &&
+          cleanStr(a.company_name) === cleanStr(b.company_name) &&
+          cleanStr(a.role) === cleanStr(b.role)
+
+        // 3. Same non-blank Job URL
+        const hasUrl = !isBlankVal(a.job_url) && !isBlankVal(b.job_url)
+        const sameUrl = hasUrl && cleanUrl(a.job_url) === cleanUrl(b.job_url)
+
+        if (sameJobId || sameCompAndRole || sameUrl) {
+          ids.add(a.id)
+          ids.add(b.id)
+
+          let reason = ''
+          if (sameJobId) reason = `Same Job ID: ${a.job_id}`
+          else if (sameCompAndRole) reason = `Same Job: ${a.company_name} - ${a.role}`
+          else if (sameUrl) reason = 'Same Application URL'
+
+          if (!reasons[a.id]) reasons[a.id] = reason
+          if (!reasons[b.id]) reasons[b.id] = reason
+        }
+      }
+    }
+    return { duplicateJobIds: ids, duplicateReasons: reasons }
+  }, [localJobs])
+
   // Filter + search logic
   const visibleJobs = useMemo(() => {
     let filtered = localJobs
+
+    if (activeFilter === 'Duplicates') {
+      filtered = filtered.filter(j => duplicateJobIds.has(j.id))
+    } else if (activeFilter !== 'All') {
+      filtered = filtered.filter(j => j.status === activeFilter)
+    }
 
     if (dateFilter !== 'All Time') {
       const now = new Date()
@@ -81,9 +146,6 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
       })
     }
 
-    if (activeFilter !== 'All') {
-      filtered = filtered.filter(j => j.status === activeFilter)
-    }
     if (search.trim()) {
       const q = search.trim().toLowerCase()
       filtered = filtered.filter(j =>
@@ -93,7 +155,7 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
       )
     }
     return filtered
-  }, [localJobs, search, activeFilter, dateFilter])
+  }, [localJobs, search, activeFilter, dateFilter, duplicateJobIds])
 
   const handleStatus = async (id: string, status: JobStatus) => {
     setUpdating(id)
@@ -239,23 +301,118 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
               </button>
             )
           })}
+
+          {/* Duplicates filter tab */}
+          <button
+            type="button"
+            onClick={() => setActiveFilter(activeFilter === 'Duplicates' ? 'All' : 'Duplicates')}
+            title={duplicateJobIds.size > 0 ? `${duplicateJobIds.size} duplicate applications detected` : 'No duplicate applications'}
+            style={{
+              position: 'relative',
+              zIndex: 10,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '5px 12px',
+              borderRadius: 99,
+              fontSize: 12,
+              fontWeight: 500,
+              border: activeFilter === 'Duplicates'
+                ? '1.5px solid #E11D48'
+                : duplicateJobIds.size > 0
+                ? '1.5px solid rgba(225, 29, 72, 0.4)'
+                : '1.5px solid var(--border)',
+              background: activeFilter === 'Duplicates'
+                ? 'rgba(225, 29, 72, 0.08)'
+                : duplicateJobIds.size > 0
+                ? 'rgba(225, 29, 72, 0.04)'
+                : 'transparent',
+              color: activeFilter === 'Duplicates'
+                ? '#E11D48'
+                : duplicateJobIds.size > 0
+                ? '#E11D48'
+                : 'var(--ink-3)',
+              cursor: 'pointer',
+              transition: 'all 150ms',
+            }}
+          >
+            <Copy size={12} />
+            Duplicates
+            <span style={{
+              fontSize: 10,
+              fontWeight: 600,
+              background: activeFilter === 'Duplicates' ? 'rgba(225, 29, 72, 0.15)' : 'var(--border)',
+              color: activeFilter === 'Duplicates' ? '#E11D48' : 'var(--ink-3)',
+              borderRadius: 99,
+              padding: '1px 6px',
+              minWidth: 18,
+              textAlign: 'center',
+            }}>
+              {duplicateJobIds.size}
+            </span>
+          </button>
         </div>
       </div>
+
+      {/* Duplicate Notice Banner when viewing duplicates */}
+      {activeFilter === 'Duplicates' && visibleJobs.length > 0 && (
+        <div style={{
+          background: 'rgba(225, 29, 72, 0.06)',
+          border: '1px solid rgba(225, 29, 72, 0.25)',
+          borderRadius: 10,
+          padding: '10px 16px',
+          marginBottom: 12,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          fontSize: 13,
+          color: '#BE123C',
+          animation: 'fadeIn 200ms ease',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Copy size={15} />
+            <span>
+              Showing <strong>{visibleJobs.length}</strong> duplicate entries (matching same Job ID, or same Role &amp; Company). Click any row to review, edit, or delete.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActiveFilter('All')}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#BE123C',
+              textDecoration: 'underline',
+              cursor: 'pointer',
+              fontSize: 12,
+              fontWeight: 600,
+            }}
+          >
+            View all applications
+          </button>
+        </div>
+      )}
 
       {/* ── TABLE ── */}
       {!loading && visibleJobs.length === 0 ? (
         <div className="card" style={{ padding: '60px 40px', textAlign: 'center', background: 'var(--surface)' }}>
-          <div style={{ fontSize: 40, marginBottom: 16 }}>🔍</div>
-          <h3 className="serif" style={{ fontSize: 22, color: 'var(--ink)', marginBottom: 8, fontWeight: 400 }}>No results found</h3>
+          <div style={{ fontSize: 40, marginBottom: 16 }}>{activeFilter === 'Duplicates' ? '✨' : '🔍'}</div>
+          <h3 className="serif" style={{ fontSize: 22, color: 'var(--ink)', marginBottom: 8, fontWeight: 400 }}>
+            {activeFilter === 'Duplicates' ? 'No duplicate applications' : 'No results found'}
+          </h3>
           <p style={{ fontSize: 14, color: 'var(--ink-2)' }}>
-            No matching applications found.
+            {activeFilter === 'Duplicates'
+              ? 'Great! All your job applications are unique with no duplicate Job IDs or roles.'
+              : search
+              ? `No applications matching "${search}"`
+              : 'No matching applications found.'}
           </p>
           <button
             onClick={() => { setSearch(''); setActiveFilter('All'); setDateFilter('All Time'); }}
             className="btn-ghost"
             style={{ marginTop: 16, fontSize: 13 }}
           >
-            Clear filters
+            {activeFilter === 'Duplicates' ? 'View all applications' : 'Clear filters'}
           </button>
         </div>
       ) : (
@@ -284,8 +441,29 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
                           <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job.company_name}</span>
                         </div>
                         
-                        <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.4, wordBreak: 'break-word', display: 'flex', alignItems: 'center', height: '100%' }}>
-                          {job.role}
+                        <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.4, wordBreak: 'break-word', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, height: '100%' }}>
+                          <span>{job.role}</span>
+                          {duplicateJobIds.has(job.id) && (
+                            <span
+                              title={duplicateReasons[job.id] || 'Duplicate application entry'}
+                              style={{
+                                fontSize: 10,
+                                fontWeight: 600,
+                                color: '#E11D48',
+                                background: 'rgba(225, 29, 72, 0.08)',
+                                border: '1px solid rgba(225, 29, 72, 0.25)',
+                                padding: '2px 6px',
+                                borderRadius: 4,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 3,
+                                flexShrink: 0,
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              <Copy size={9} /> Duplicate
+                            </span>
+                          )}
                         </div>
 
                         <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', display: 'flex', alignItems: 'center', height: '100%', overflow: 'hidden' }}>

@@ -7,6 +7,7 @@ import ExportButton from './ExportButton'
 import SettingsModal from './SettingsModal'
 import MotivatingQuotes from '@/components/ui/MotivatingQuotes'
 import StreakTracker from '@/components/ui/StreakTracker'
+import TodayTracker from '@/components/ui/TodayTracker'
 import { JobApplication, UserProfile } from '@/types/job'
 import AnimatedCounter from '@/components/ui/AnimatedCounter'
 import { Briefcase, TrendingUp, MessageSquare, CheckCircle2, XCircle, LogOut } from 'lucide-react'
@@ -135,8 +136,9 @@ export default async function DashboardPage() {
             <MotivatingQuotes />
           </div>
           
-          <div style={{ marginTop: 12 }}>
+          <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <StreakTracker streak={streak} />
+            <TodayTracker jobs={j as JobApplication[]} />
           </div>
         </div>
 
