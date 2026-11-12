@@ -98,7 +98,7 @@ export default async function LandingPage() {
               </div>
               {[
                 { co: '🟢 Google', role: 'Software Engineer', d: '25 Sep', sal: '₹28 LPA', st: 'Interviewing', sc: 'var(--s-interviewing)', sb: 'rgba(193,126,74,0.1)' },
-                { co: '🔵 Microsoft', role: 'Product Manager', d: '22 Sep', sal: '₹35 LPA', st: 'Applied', sc: 'var(--s-applied)', sb: 'rgba(74,127,165,0.08)' },
+                { co: '💼 Microsoft', role: 'Product Manager', d: '22 Sep', sal: '₹35 LPA', st: 'Applied', sc: 'var(--s-applied)', sb: 'rgba(130,99,72,0.09)' },
                 { co: '🟠 Amazon', role: 'Backend Engineer', d: '20 Sep', sal: '₹32 LPA', st: 'Offer', sc: 'var(--s-offer)', sb: 'rgba(74,140,92,0.1)' },
               ].map(row => (
                 <div key={row.co} style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr', padding: '14px 20px', gap: 16, borderBottom: '1px solid var(--border)', alignItems: 'center', background: 'var(--surface)' }}>

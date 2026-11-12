@@ -5,12 +5,13 @@ import { JobApplication, JobStatus } from '@/types/job'
 import { Trash2, Edit2, Hash, ExternalLink, Clock, Copy, ChevronRight, MapPin, DollarSign } from 'lucide-react'
 
 const KANBAN_COLUMNS: { status: JobStatus; label: string; color: string; bg: string }[] = [
-  { status: 'Applied',      label: 'Applied',      color: 'var(--s-applied)',      bg: 'rgba(74,127,165,0.08)' },
-  { status: 'Shortlisted',  label: 'Shortlisted',  color: '#8b5cf6',               bg: 'rgba(139,92,246,0.08)' },
-  { status: 'Assessment',   label: 'Assessment',   color: '#f59e0b',               bg: 'rgba(245,158,11,0.08)' },
-  { status: 'Interviewing', label: 'Interviewing', color: 'var(--s-interviewing)', bg: 'rgba(193,126,74,0.08)' },
-  { status: 'Offer',        label: 'Offer',        color: 'var(--s-offer)',         bg: 'rgba(74,140,92,0.08)' },
-  { status: 'Rejected',     label: 'Rejected',     color: 'var(--s-rejected)',      bg: 'rgba(160,64,64,0.08)' },
+  { status: 'Applied',      label: 'Applied',      color: 'var(--s-applied)',      bg: 'rgba(130, 99, 72, 0.09)' },
+  { status: 'Shortlisted',  label: 'Shortlisted',  color: 'var(--s-shortlisted)',  bg: 'rgba(138, 86, 117, 0.09)' },
+  { status: 'Assessment',   label: 'Assessment',   color: 'var(--s-assessment)',   bg: 'rgba(191, 122, 48, 0.09)' },
+  { status: 'Interviewing', label: 'Interviewing', color: 'var(--s-interviewing)', bg: 'rgba(172, 86, 25, 0.09)' },
+  { status: 'Offer',        label: 'Offer',        color: 'var(--s-offer)',         bg: 'rgba(74, 124, 89, 0.09)' },
+  { status: 'Rejected',     label: 'Rejected',     color: 'var(--s-rejected)',      bg: 'rgba(158, 66, 62, 0.08)' },
+  { status: 'Withdrawn',    label: 'Withdrawn',    color: 'var(--s-withdrawn)',     bg: 'rgba(130, 120, 109, 0.09)' },
 ]
 
 function CompanyFavicon({ company }: { company: string }) {

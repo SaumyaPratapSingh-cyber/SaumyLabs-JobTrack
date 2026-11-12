@@ -77,11 +77,11 @@ export default function TodayTracker({ jobs }: { jobs: JobApplication[] }) {
         gap: 12,
         padding: '10px 18px',
         background: isActive
-          ? 'linear-gradient(135deg, rgba(74,127,165,0.1), rgba(74,127,165,0.02))'
+          ? 'linear-gradient(135deg, rgba(184, 107, 53, 0.12), rgba(184, 107, 53, 0.02))'
           : 'var(--surface-2)',
-        border: isActive ? '1px solid rgba(74,127,165,0.3)' : '1px solid var(--border)',
+        border: isActive ? '1px solid rgba(184, 107, 53, 0.35)' : '1px solid var(--border)',
         borderRadius: 99,
-        boxShadow: isActive ? '0 4px 20px rgba(74,127,165,0.15)' : 'none',
+        boxShadow: isActive ? '0 4px 20px rgba(184, 107, 53, 0.12)' : 'none',
         animationDelay: '150ms',
         cursor: 'default',
         userSelect: 'none',
@@ -118,7 +118,7 @@ export default function TodayTracker({ jobs }: { jobs: JobApplication[] }) {
             cx={center}
             cy={center}
             r={radius}
-            stroke={isActive ? 'var(--s-applied)' : 'var(--ink-4)'}
+            stroke={isActive ? 'var(--accent)' : 'var(--ink-4)'}
             strokeWidth={strokeWidth}
             fill="none"
             strokeDasharray={circumference}
@@ -131,7 +131,7 @@ export default function TodayTracker({ jobs }: { jobs: JobApplication[] }) {
         <Building2
           size={15}
           style={{
-            color: isActive ? 'var(--s-applied)' : 'var(--ink-4)',
+            color: isActive ? 'var(--accent)' : 'var(--ink-4)',
             transition: 'color 200ms ease',
           }}
         />
@@ -143,7 +143,7 @@ export default function TodayTracker({ jobs }: { jobs: JobApplication[] }) {
             style={{
               fontSize: 14,
               fontWeight: 700,
-              color: isActive ? 'var(--s-applied)' : 'var(--ink-3)',
+              color: isActive ? 'var(--accent)' : 'var(--ink-3)',
               lineHeight: 1,
             }}
           >
@@ -155,7 +155,7 @@ export default function TodayTracker({ jobs }: { jobs: JobApplication[] }) {
                 fontSize: 10,
                 fontWeight: 700,
                 color: 'var(--s-offer)',
-                background: 'rgba(74,140,92,0.12)',
+                background: 'rgba(74, 124, 89, 0.12)',
                 borderRadius: 99,
                 padding: '1px 5px',
                 lineHeight: 1.2,

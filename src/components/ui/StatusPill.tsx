@@ -1,13 +1,13 @@
 import { JobStatus } from '@/types/job'
 
 const STATUS_CONFIG: Record<JobStatus, { dot: string; bg: string; text: string; label: string }> = {
-  Applied:      { dot: 'bg-[#57534E]', bg: 'bg-stone-100',   text: 'text-[#57534E]', label: 'Applied' },
-  Shortlisted:  { dot: 'bg-[#8B5CF6]', bg: 'bg-violet-50',   text: 'text-[#8B5CF6]', label: 'Shortlisted' },
-  Assessment:   { dot: 'bg-[#F59E0B]', bg: 'bg-orange-50',   text: 'text-[#F59E0B]', label: 'Assessment' },
-  Interviewing: { dot: 'bg-[#B45309]', bg: 'bg-amber-50',    text: 'text-[#B45309]', label: 'Interviewing' },
-  Offer:        { dot: 'bg-[#4A7C59]', bg: 'bg-emerald-50',  text: 'text-[#4A7C59]', label: 'Offer' },
-  Rejected:     { dot: 'bg-[#9F3A38]', bg: 'bg-rose-50',     text: 'text-[#9F3A38]', label: 'Rejected' },
-  Withdrawn:    { dot: 'bg-[#A8A29E]', bg: 'bg-stone-50',    text: 'text-[#A8A29E]', label: 'Withdrawn' },
+  Applied:      { dot: 'bg-[#826348]', bg: 'bg-[#F4ECE1]', text: 'text-[#826348]', label: 'Applied' },
+  Shortlisted:  { dot: 'bg-[#8A5675]', bg: 'bg-[#F7EEF4]', text: 'text-[#8A5675]', label: 'Shortlisted' },
+  Assessment:   { dot: 'bg-[#BF7A30]', bg: 'bg-[#FDF3E7]', text: 'text-[#BF7A30]', label: 'Assessment' },
+  Interviewing: { dot: 'bg-[#AC5619]', bg: 'bg-[#FAECE3]', text: 'text-[#AC5619]', label: 'Interviewing' },
+  Offer:        { dot: 'bg-[#4A7C59]', bg: 'bg-[#EDF5F0]', text: 'text-[#4A7C59]', label: 'Offer' },
+  Rejected:     { dot: 'bg-[#9E423E]', bg: 'bg-[#FBEAE9]', text: 'text-[#9E423E]', label: 'Rejected' },
+  Withdrawn:    { dot: 'bg-[#82786D]', bg: 'bg-[#F2EFE9]', text: 'text-[#82786D]', label: 'Withdrawn' },
 }
 
 export default function StatusPill({ status, animate }: { status: JobStatus; animate?: boolean }) {

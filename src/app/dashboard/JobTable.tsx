@@ -11,13 +11,13 @@ import KanbanBoard from './KanbanBoard'
 const ALL_STATUSES: JobStatus[] = ['Applied', 'Shortlisted', 'Assessment', 'Interviewing', 'Offer', 'Rejected', 'Withdrawn']
 
 const STATUS_STYLE: Record<JobStatus, { color: string; bg: string }> = {
-  Applied:      { color: 'var(--s-applied)',      bg: 'rgba(74,127,165,0.08)' },
-  Shortlisted:  { color: '#8b5cf6',               bg: 'rgba(139,92,246,0.09)' },
-  Assessment:   { color: '#f59e0b',               bg: 'rgba(245,158,11,0.09)' },
-  Interviewing: { color: 'var(--s-interviewing)', bg: 'rgba(193,126,74,0.09)' },
-  Offer:        { color: 'var(--s-offer)',         bg: 'rgba(74,140,92,0.09)' },
-  Rejected:     { color: 'var(--s-rejected)',      bg: 'rgba(160,64,64,0.08)' },
-  Withdrawn:    { color: 'var(--s-withdrawn)',     bg: 'rgba(138,129,120,0.09)' },
+  Applied:      { color: 'var(--s-applied)',      bg: 'rgba(130, 99, 72, 0.09)' },
+  Shortlisted:  { color: 'var(--s-shortlisted)',  bg: 'rgba(138, 86, 117, 0.09)' },
+  Assessment:   { color: 'var(--s-assessment)',   bg: 'rgba(191, 122, 48, 0.09)' },
+  Interviewing: { color: 'var(--s-interviewing)', bg: 'rgba(172, 86, 25, 0.09)' },
+  Offer:        { color: 'var(--s-offer)',         bg: 'rgba(74, 124, 89, 0.09)' },
+  Rejected:     { color: 'var(--s-rejected)',      bg: 'rgba(158, 66, 62, 0.08)' },
+  Withdrawn:    { color: 'var(--s-withdrawn)',     bg: 'rgba(130, 120, 109, 0.09)' },
 }
 
 function CompanyFavicon({ company }: { company: string }) {
@@ -182,7 +182,7 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
   const handleStatus = async (id: string, status: JobStatus) => {
     setUpdating(id)
     setLocalJobs(p => p.map(j => j.id === id ? { ...j, status } : j))
-    if (status === 'Offer') confetti({ particleCount: 130, spread: 80, origin: { y: 0.6 }, colors: ['#C17E4A', '#4A8C5C', '#F7F4EF', '#1C1814'] })
+    if (status === 'Offer') confetti({ particleCount: 130, spread: 80, origin: { y: 0.6 }, colors: ['#B86B35', '#4A7C59', '#FBF8F3', '#241C16', '#BF7A30'] })
     await updateJobStatus(id, status)
     setUpdating(null)
   }
@@ -599,7 +599,7 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
           <div style={{ overflowX: 'auto' }}>
             <div style={{ minWidth: 1100 }}>
               {/* Sticky Header */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(140px, 1.5fr) minmax(160px, 1.5fr) minmax(90px, 1fr) minmax(100px, 1fr) minmax(110px, 1fr) minmax(100px, 1fr) minmax(160px, 1.5fr) minmax(120px, 1.2fr) 90px', borderBottom: '1px solid var(--border)', background: 'rgba(250, 248, 245, 0.96)', backdropFilter: 'blur(8px)', position: 'sticky', top: 0, zIndex: 10 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(140px, 1.5fr) minmax(160px, 1.5fr) minmax(90px, 1fr) minmax(100px, 1fr) minmax(110px, 1fr) minmax(100px, 1fr) minmax(160px, 1.5fr) minmax(120px, 1.2fr) 90px', borderBottom: '1px solid var(--border)', background: 'rgba(248, 243, 234, 0.96)', backdropFilter: 'blur(8px)', position: 'sticky', top: 0, zIndex: 10 }}>
                 {HEADS.map((h, i) => (
                   <div key={i} style={{ padding: '12px 16px', fontSize: 10, fontWeight: 600, color: 'var(--ink-3)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap', borderRight: i < 8 ? '1px solid var(--border)' : 'none' }}>
                     {h}

@@ -27,11 +27,11 @@ export default function AnalyticsSection({ jobs }: { jobs: JobApplication[] }) {
 
     // Funnel Stage Data
     const funnelData = [
-      { stage: 'Applied', count: total, fill: '#4A7FA5' },
-      { stage: 'Shortlisted', count: shortlisted + assessment + interviewing + offer, fill: '#8B5CF6' },
-      { stage: 'Assessment', count: assessment + interviewing + offer, fill: '#F59E0B' },
-      { stage: 'Interview', count: interviewing + offer, fill: '#C17E4A' },
-      { stage: 'Offer', count: offer, fill: '#4A8C5C' },
+      { stage: 'Applied', count: total, fill: '#826348' },
+      { stage: 'Shortlisted', count: shortlisted + assessment + interviewing + offer, fill: '#8A5675' },
+      { stage: 'Assessment', count: assessment + interviewing + offer, fill: '#BF7A30' },
+      { stage: 'Interview', count: interviewing + offer, fill: '#AC5619' },
+      { stage: 'Offer', count: offer, fill: '#4A7C59' },
     ]
 
     // Timeline / Velocity Data (Grouped by month/week)
@@ -171,8 +171,8 @@ export default function AnalyticsSection({ jobs }: { jobs: JobApplication[] }) {
                   <AreaChart data={analytics.timelineData} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
                     <defs>
                       <linearGradient id="appliedColor" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#4A7FA5" stopOpacity={0.4} />
-                        <stop offset="95%" stopColor="#4A7FA5" stopOpacity={0.0} />
+                        <stop offset="5%" stopColor="#B86B35" stopOpacity={0.35} />
+                        <stop offset="95%" stopColor="#B86B35" stopOpacity={0.0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} />
@@ -182,7 +182,7 @@ export default function AnalyticsSection({ jobs }: { jobs: JobApplication[] }) {
                       contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
                       formatter={(val: any) => [`${val} applications`, 'Applied']}
                     />
-                    <Area type="monotone" dataKey="count" stroke="#4A7FA5" strokeWidth={2} fillOpacity={1} fill="url(#appliedColor)" />
+                    <Area type="monotone" dataKey="count" stroke="#B86B35" strokeWidth={2} fillOpacity={1} fill="url(#appliedColor)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>

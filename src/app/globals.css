@@ -2,45 +2,49 @@
 
 @import "tailwindcss";
 
-/* ── Design Tokens ───────────────────────────── */
+/* ── Beige, Cream, Warm Brown & Allied Palette ───────────────────────────── */
 :root {
-  --bg:            #F8F6F2;
-  --bg-2:          #EFE9DF;
-  --bg-3:          #E5DDCF;
-  --surface:       #FFFFFF;
-  --surface-2:     #FAF8F5;
-  --surface-3:     #F3EFE9;
-  
-  --border:        #E6DFD5;
-  --border-2:      #D8CFBF;
-  --border-focus:  #C17E4A;
+  /* Warm Parchment & Linen Canvas */
+  --bg:            #FBF8F3;  /* Luxurious warm cream paper / ivory linen */
+  --bg-2:          #F4ECE1;  /* Soft warm beige parchment */
+  --bg-3:          #EAE0D0;  /* Deeper warm sand / golden oat */
+  --surface:       #FFFFFF;  /* Crisp warm white */
+  --surface-2:     #F8F3EA;  /* Cream surface */
+  --surface-3:     #EFE7DA;  /* Warm oat surface */
 
-  --ink:           #1A1714;
-  --ink-2:         #453F38;
-  --ink-3:         #7E756B;
-  --ink-4:         #ADA397;
-  --ink-5:         #D6CEBE;
+  /* Earthy Warm Borders */
+  --border:        #E8E0D2;  /* Soft warm parchment border */
+  --border-2:      #D9CFC0;  /* Warm sand border */
+  --border-focus:  #C17E4A;  /* Warm caramel bronze */
 
-  --accent:        #C17E4A;
-  --accent-2:      #A3632C;
-  --accent-light:  #E8A876;
-  --accent-bg:     rgba(193, 126, 74, 0.08);
-  --accent-border: rgba(193, 126, 74, 0.25);
+  /* Roasted Espresso & Cocoa Typography (Warm, never cold black) */
+  --ink:           #241C16;  /* Deep roasted coffee bean */
+  --ink-2:         #4D3F33;  /* Warm hazelnut / dark cocoa */
+  --ink-3:         #857565;  /* Warm taupe / soft roasted mocha */
+  --ink-4:         #B5A695;  /* Warm sand text */
+  --ink-5:         #DDD3C5;  /* Subtle beige divider */
 
-  /* Status Tokens */
-  --s-applied:      #3B82F6;
-  --s-shortlisted:  #8B5CF6;
-  --s-assessment:   #F59E0B;
-  --s-interviewing: #D97706;
-  --s-offer:        #10B981;
-  --s-rejected:     #EF4444;
-  --s-withdrawn:    #78716C;
+  /* Warm Caramel, Bronze & Terracotta Accents */
+  --accent:        #B86B35;  /* Rich warm terracotta / burnt caramel */
+  --accent-2:      #8F4F20;  /* Deep chestnut bronze */
+  --accent-light:  #DFC0A5;  /* Soft warm latte */
+  --accent-bg:     rgba(184, 107, 53, 0.08);
+  --accent-border: rgba(184, 107, 53, 0.24);
 
-  /* Shadows */
-  --shadow-xs: 0 1px 2px rgba(26, 23, 20, 0.04);
-  --shadow-sm: 0 2px 6px -1px rgba(26, 23, 20, 0.05), 0 1px 3px rgba(26, 23, 20, 0.03);
-  --shadow-md: 0 6px 18px -3px rgba(26, 23, 20, 0.07), 0 2px 6px -1px rgba(26, 23, 20, 0.04);
-  --shadow-lg: 0 16px 36px -6px rgba(26, 23, 20, 0.11), 0 4px 12px -2px rgba(26, 23, 20, 0.05);
+  /* Warm Earthy Status Palette (100% harmonious with beige, cream & brown) */
+  --s-applied:      #826348;  /* Warm Saddle Brown / Cocoa Cedar */
+  --s-shortlisted:  #8A5675;  /* Warm Mulberry / Antique Rosewood */
+  --s-assessment:   #BF7A30;  /* Warm Toffee Cognac */
+  --s-interviewing: #AC5619;  /* Warm Spiced Cinnamon / Terracotta */
+  --s-offer:        #4A7C59;  /* Warm Earthy Olive Sage Green */
+  --s-rejected:     #9E423E;  /* Warm Terracotta Brick Red */
+  --s-withdrawn:    #82786D;  /* Warm Weathered Sandstone */
+
+  /* Warm Soft Shadows */
+  --shadow-xs: 0 1px 2px rgba(36, 28, 22, 0.035);
+  --shadow-sm: 0 2px 8px -1px rgba(36, 28, 22, 0.05), 0 1px 3px rgba(36, 28, 22, 0.03);
+  --shadow-md: 0 6px 20px -3px rgba(36, 28, 22, 0.07), 0 2px 6px -1px rgba(36, 28, 22, 0.04);
+  --shadow-lg: 0 16px 36px -6px rgba(36, 28, 22, 0.1), 0 4px 12px -2px rgba(36, 28, 22, 0.04);
 }
 
 * {
@@ -195,7 +199,7 @@ body {
 }
 .field:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(193, 126, 74, 0.12);
+  box-shadow: 0 0 0 3px rgba(184, 107, 53, 0.14);
 }
 .field::placeholder {
   color: var(--ink-4);
@@ -234,7 +238,7 @@ body {
   transform: scaleY(1);
 }
 .job-row:hover {
-  background-color: rgba(193, 126, 74, 0.035);
+  background-color: rgba(184, 107, 53, 0.04);
 }
 
 /* ── Status Pill ─────────────────────────────── */
@@ -266,7 +270,7 @@ body {
 
 /* ── Sticky Navbar ───────────────────────────── */
 .nav {
-  background: rgba(248, 246, 242, 0.88);
+  background: rgba(251, 248, 243, 0.9);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
