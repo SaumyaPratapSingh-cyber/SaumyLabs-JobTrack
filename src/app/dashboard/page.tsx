@@ -28,21 +28,33 @@ function getGreeting() {
   return 'Good evening'
 }
 
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profileData } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-  const profile = profileData as UserProfile | null
+  let profile: UserProfile | null = null
+  let j: JobApplication[] = []
 
-  const { data: jobs } = await supabase
-    .from('job_applications')
-    .select('*')
-    .order('date_applied', { ascending: false, nullsFirst: false })
-    .order('created_at', { ascending: false })
+  try {
+    const { data: profileData } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+    profile = profileData as UserProfile | null
+  } catch (err) {
+    console.warn('Profile fetch error:', err)
+  }
 
-  const j = jobs || []
+  try {
+    const { data: jobs } = await supabase
+      .from('job_applications')
+      .select('*')
+      .order('date_applied', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false })
+    j = (jobs as JobApplication[]) || []
+  } catch (err) {
+    console.warn('Jobs fetch error:', err)
+  }
   
   // Calculate Streak
   let streak = 0

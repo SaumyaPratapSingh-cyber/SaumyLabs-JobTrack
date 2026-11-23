@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { addJobApplication } from './actions'
 import { JobStatus, JobApplication } from '@/types/job'
 import { createClient } from '@/utils/supabase/client'
-import { X, Sparkles, ArrowLeft, Save, AlertTriangle } from 'lucide-react'
+import { X, Sparkles, ArrowLeft, Save, AlertTriangle, PenLine } from 'lucide-react'
 
 interface ParsedJob {
   company_name: string; role: string; date_applied?: string; status: JobStatus
@@ -101,15 +101,49 @@ export default function AddJobModal({ existingJobs = [] }: { existingJobs?: JobA
     return { isDuplicate: false }
   }, [parsed, jobList])
 
+  const handleManualEntry = () => {
+    setParsed({
+      company_name: '',
+      role: '',
+      status: 'Applied',
+      date_applied: new Date().toISOString().split('T')[0],
+      job_id: '',
+      salary_info: '',
+      location: '',
+      job_url: '',
+      notes: text.trim(),
+    })
+    setError('')
+    setStep(2)
+  }
+
   const handleParse = async () => {
     if (!text.trim()) return
     setLoading(true); setError(''); setStep(1)
     try {
-      const res = await fetch('/api/parse-job', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) })
+      const res = await fetch('/api/parse-job', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      })
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Server error while parsing.')
+      }
       const data = await res.json()
       if (data.error) throw new Error(data.error)
-      setParsed(data); setStep(2)
-    } catch (e: any) { setError(e.message); setStep(0) } finally { setLoading(false) }
+      setParsed(data)
+      setStep(2)
+    } catch (e: any) {
+      console.warn('AI extraction encountered an error:', e.message)
+      const userMessage = e.message?.toLowerCase().includes('fetch failed') || e.message?.toLowerCase().includes('failed to fetch')
+        ? 'Could not connect to extraction service. You can enter details manually below.'
+        : (e.message || 'Unable to extract. Please try again or fill manually.')
+      setError(userMessage)
+      setStep(0)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleSave = async () => {
@@ -168,12 +202,24 @@ export default function AddJobModal({ existingJobs = [] }: { existingJobs?: JobA
                 <textarea value={text} onChange={e => setText(e.target.value)} autoFocus={open}
                   placeholder={`Paste your job confirmation email or application text…\n\nExample:\n"Congratulations! You have applied for Software Engineer (Job ID: SE-4521) at Google on 27 Sep 2026. Location: Bangalore. CTC: ₹28 LPA."`}
                   className="field" style={{ height: 200, resize: 'none', lineHeight: 1.65, fontSize: 14 }} />
-                {error && <p style={{ color: 'var(--s-rejected)', fontSize: 13, marginTop: 10, background: 'rgba(160,64,64,0.06)', padding: '10px 14px', borderRadius: 8 }}>{error}</p>}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 16 }}>
-                  <button onClick={handleClose} className="btn-ghost" style={{ padding: '9px 16px' }}>Cancel</button>
-                  <button onClick={handleParse} disabled={!text.trim() || loading} className="btn-primary" style={{ padding: '9px 18px', opacity: !text.trim() ? 0.45 : 1 }}>
-                    <Sparkles size={14} /> Extract with AI
+                {error && (
+                  <div style={{ marginTop: 10, background: 'rgba(160,64,64,0.06)', border: '1px solid rgba(160,64,64,0.2)', padding: '10px 14px', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                    <p style={{ color: 'var(--s-rejected)', fontSize: 13, margin: 0 }}>{error}</p>
+                    <button type="button" onClick={handleManualEntry} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontWeight: 600, fontSize: 12, cursor: 'pointer', textDecoration: 'underline', whiteSpace: 'nowrap' }}>
+                      Fill Manually →
+                    </button>
+                  </div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
+                  <button type="button" onClick={handleManualEntry} className="btn-ghost" style={{ padding: '9px 14px', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <PenLine size={13} /> Enter Manually
                   </button>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <button type="button" onClick={handleClose} className="btn-ghost" style={{ padding: '9px 16px' }}>Cancel</button>
+                    <button type="button" onClick={handleParse} disabled={!text.trim() || loading} className="btn-primary" style={{ padding: '9px 18px', opacity: !text.trim() ? 0.45 : 1 }}>
+                      <Sparkles size={14} /> Extract with AI
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
