@@ -161,11 +161,11 @@ export default function AddJobModal({ existingJobs = [] }: { existingJobs?: JobA
   const modalContent = (
     <>
       {/* Backdrop */}
-      <div onClick={handleClose} style={{ position: 'fixed', inset: 0, background: 'rgba(28,24,20,0.35)', backdropFilter: 'blur(4px)', zIndex: 9999, transition: 'opacity 250ms', opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none' }} />
+      <div onClick={handleClose} className="fade-in" style={{ position: 'fixed', inset: 0, background: 'rgba(28,24,20,0.35)', backdropFilter: 'blur(4px)', zIndex: 9999 }} />
 
       {/* Modal */}
       <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, padding: 20, pointerEvents: 'none' }}>
-        <div style={{ background: 'var(--surface)', borderRadius: 18, width: '100%', maxWidth: 640, boxShadow: '0 24px 80px rgba(28,24,20,0.16)', border: '1px solid var(--border)', pointerEvents: 'auto', transition: 'all 280ms cubic-bezier(0.22,1,0.36,1)', transform: open ? 'scale(1) translateY(0)' : 'scale(0.95) translateY(16px)', opacity: open ? 1 : 0 }}>
+        <div className="scale-in" style={{ background: 'var(--surface)', borderRadius: 18, width: '100%', maxWidth: 640, boxShadow: '0 24px 80px rgba(28,24,20,0.16)', border: '1px solid var(--border)', pointerEvents: 'auto' }}>
 
           {/* Header */}
           <div style={{ padding: '24px 28px 20px', borderBottom: '1px solid var(--border)' }}>
@@ -350,7 +350,7 @@ export default function AddJobModal({ existingJobs = [] }: { existingJobs?: JobA
       <button data-add-job-btn="true" onClick={() => setOpen(true)} className="btn-primary" style={{ gap: 7 }}>
         <Sparkles size={14} /> Add Application
       </button>
-      {mounted && createPortal(modalContent, document.body)}
+      {mounted && open && createPortal(modalContent, document.body)}
     </>
   )
 }

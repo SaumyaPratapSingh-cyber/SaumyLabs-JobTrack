@@ -35,13 +35,19 @@ export default function DashboardNav({ profile, userEmail, jobs }: DashboardNavP
     } else if (actionId === 'toggle_analytics') {
       const analyticsBtn = document.querySelector('button:has(svg.lucide-bar-chart-3)') as HTMLButtonElement
       if (analyticsBtn) analyticsBtn.click()
+    } else if (actionId === 'filter_followup') {
+      const btn = document.querySelector('[data-filter-btn="NeedsFollowUp"]') as HTMLButtonElement
+      if (btn) btn.click()
+    } else if (actionId === 'filter_duplicates') {
+      const btn = document.querySelector('[data-filter-btn="Duplicates"]') as HTMLButtonElement
+      if (btn) btn.click()
     }
   }
 
   return (
     <>
       <header className="nav" style={{ position: 'sticky', top: 0, zIndex: 40 }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ width: '100%', maxWidth: 1760, margin: '0 auto', padding: '0 clamp(16px, 2.5vw, 36px)', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
               <div style={{ width: 24, height: 24, background: 'var(--ink)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>💼</div>

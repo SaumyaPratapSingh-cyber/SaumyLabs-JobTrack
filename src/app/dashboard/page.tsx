@@ -117,12 +117,12 @@ export default async function DashboardPage() {
       {/* ── NAV WITH COMMAND PALETTE ── */}
       <DashboardNav profile={profile} userEmail={user.email} jobs={j as JobApplication[]} />
 
-      <main style={{ maxWidth: 1280, margin: '0 auto', padding: '44px 32px' }}>
+      <main style={{ width: '100%', maxWidth: 1760, margin: '0 auto', padding: '32px clamp(16px, 2.5vw, 36px) 56px' }}>
 
         {/* ── GREETING & STREAK ── */}
-        <div className="fade-up" style={{ marginBottom: 40, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 24 }}>
+        <div className="fade-up" style={{ marginBottom: 28, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 20 }}>
           <div>
-            <h1 className="serif" style={{ fontSize: 'clamp(32px, 4vw, 52px)', color: 'var(--ink)', fontWeight: 400, marginBottom: 6 }}>
+            <h1 className="serif" style={{ fontSize: 'clamp(30px, 3.4vw, 46px)', color: 'var(--ink)', fontWeight: 400, marginBottom: 4 }}>
               {getGreeting()}, <em style={{ color: 'var(--accent)' }}>{displayName}</em>.
             </h1>
             <p style={{ fontSize: 14, color: 'var(--ink-3)' }}>
@@ -133,14 +133,14 @@ export default async function DashboardPage() {
             <MotivatingQuotes />
           </div>
           
-          <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <StreakTracker streak={streak} />
             <TodayTracker jobs={j as JobApplication[]} />
           </div>
         </div>
 
         {/* ── STATS ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 28 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 22 }}>
           {STATS.map(({ key, label, icon: Icon, color }, i) => (
             <div
               key={key}

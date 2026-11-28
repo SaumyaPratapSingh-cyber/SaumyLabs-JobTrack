@@ -38,14 +38,22 @@ function CompanyFavicon({ company }: { company: string }) {
 
 function SkeletonRow() {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(160px, 1.5fr) minmax(160px, 1.5fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(120px, 1fr) minmax(100px, 1fr) minmax(140px, 1.5fr) minmax(120px, 1.2fr) 90px', borderBottom: '1px solid var(--border)' }}>
-      {[120, 160, 80, 80, 70, 60, 100, 70, 32].map((w, i) => (
-        <div key={i} style={{ padding: '14px 16px', borderRight: i < 8 ? '1px solid var(--border)' : 'none' }}>
-          <div className="skeleton" style={{ height: 13, width: w }} />
-        </div>
+    <tr style={{ borderBottom: '1px solid var(--border)' }}>
+      {[28, 80, 140, 120, 80, 220, 180, 85, 64].map((w, i) => (
+        <td key={i} style={{ padding: '14px 16px', borderRight: i < 8 ? '1px solid var(--border)' : 'none' }}>
+          <div className="skeleton" style={{ height: 13, width: w, maxWidth: '100%' }} />
+        </td>
       ))}
-    </div>
+    </tr>
   )
+}
+
+function extractUrls(raw?: string | null): string[] {
+  if (!raw) return []
+  return raw
+    .split(/[\s\n]+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 0 && s !== '-')
 }
 
 function isBlankVal(val?: string | null): boolean {
@@ -196,7 +204,17 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
     setUpdating(null)
   }
 
-  const HEADS = ['Company', 'Role', 'Job ID', 'Date', 'Location', 'Salary', 'Notes', 'Status', '']
+  const HEADS = [
+    { label: '#', align: 'center' as const, width: 46 },
+    { label: 'Job ID', align: 'left' as const, minWidth: 105 },
+    { label: 'Role', align: 'left' as const, minWidth: 165 },
+    { label: 'Company', align: 'left' as const, minWidth: 155 },
+    { label: 'Date', align: 'left' as const, width: 112 },
+    { label: 'Details & Notes', align: 'left' as const, minWidth: 280 },
+    { label: 'Job Link', align: 'left' as const, minWidth: 220 },
+    { label: 'Status', align: 'left' as const, width: 136 },
+    { label: 'Actions', align: 'center' as const, width: 96 },
+  ]
 
   const FILTER_TABS: (JobStatus | 'All')[] = ['All', ...ALL_STATUSES]
 
@@ -377,6 +395,7 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
           {/* Duplicates filter tab */}
           <button
             type="button"
+            data-filter-btn="Duplicates"
             onClick={() => setActiveFilter(activeFilter === 'Duplicates' ? 'All' : 'Duplicates')}
             title={duplicateJobIds.size > 0 ? `${duplicateJobIds.size} duplicate applications detected` : 'No duplicate applications'}
             style={{
@@ -427,6 +446,7 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
           {/* Needs Follow-Up filter tab */}
           <button
             type="button"
+            data-filter-btn="NeedsFollowUp"
             onClick={() => setActiveFilter(activeFilter === 'NeedsFollowUp' ? 'All' : 'NeedsFollowUp')}
             title={staleJobIds.size > 0 ? `${staleJobIds.size} applications need follow-up (>7 days without response)` : 'No applications need follow-up'}
             style={{
@@ -596,150 +616,374 @@ export default function JobTable({ jobs, loading }: { jobs: JobApplication[], lo
         />
       ) : (
         <div className="card" style={{ overflow: 'hidden', background: 'var(--surface)' }}>
-          <div style={{ overflowX: 'auto' }}>
-            <div style={{ minWidth: 1100 }}>
-              {/* Sticky Header */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(140px, 1.5fr) minmax(160px, 1.5fr) minmax(90px, 1fr) minmax(100px, 1fr) minmax(110px, 1fr) minmax(100px, 1fr) minmax(160px, 1.5fr) minmax(120px, 1.2fr) 90px', borderBottom: '1px solid var(--border)', background: 'rgba(248, 243, 234, 0.96)', backdropFilter: 'blur(8px)', position: 'sticky', top: 0, zIndex: 10 }}>
-                {HEADS.map((h, i) => (
-                  <div key={i} style={{ padding: '12px 16px', fontSize: 10, fontWeight: 600, color: 'var(--ink-3)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap', borderRight: i < 8 ? '1px solid var(--border)' : 'none' }}>
-                    {h}
-                  </div>
-                ))}
-              </div>
+          <div style={{ overflowX: 'auto', width: '100%' }}>
+            <table style={{ width: '100%', minWidth: 1120, borderCollapse: 'collapse', tableLayout: 'auto' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border)', background: 'rgba(248, 243, 234, 0.96)' }}>
+                  {HEADS.map((h, i) => (
+                    <th
+                      key={h.label}
+                      style={{
+                        padding: '12px 14px',
+                        fontSize: 10,
+                        fontWeight: 600,
+                        color: 'var(--ink-3)',
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
+                        whiteSpace: 'nowrap',
+                        textAlign: h.align,
+                        width: h.width,
+                        minWidth: h.minWidth,
+                        borderRight: i < HEADS.length - 1 ? '1px solid var(--border)' : 'none',
+                        position: 'sticky',
+                        top: 0,
+                        zIndex: 10,
+                        background: 'rgba(248, 243, 234, 0.96)',
+                      }}
+                    >
+                      {h.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
 
-              {/* Body */}
-              <div>
+              <tbody>
                 {loading
-                  ? [1,2,3].map(i => <SkeletonRow key={i} />)
+                  ? [1, 2, 3].map(i => <SkeletonRow key={i} />)
                   : visibleJobs.map((job, i) => {
                     const st = STATUS_STYLE[job.status as JobStatus] ?? STATUS_STYLE.Applied
-                    return (
-                      <div key={job.id} onClick={() => setEditingJob(job)} className="job-row row-in" style={{ display: 'grid', gridTemplateColumns: 'minmax(140px, 1.5fr) minmax(160px, 1.5fr) minmax(90px, 1fr) minmax(100px, 1fr) minmax(110px, 1fr) minmax(100px, 1fr) minmax(160px, 1.5fr) minmax(120px, 1.2fr) 90px', borderBottom: '1px solid var(--border)', animationDelay: `${i * 45}ms`, opacity: updating === job.id ? 0.5 : 1, transition: 'opacity 200ms, background 150ms', alignItems: 'center', cursor: 'pointer' }}>
-                        <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10, height: '100%' }}>
-                          <CompanyFavicon company={job.company_name} />
-                          <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job.company_name}</span>
-                        </div>
-                        
-                        <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.4, wordBreak: 'break-word', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, height: '100%' }}>
-                          <span>{job.role}</span>
-                          {duplicateJobIds.has(job.id) && (
-                            <span
-                              title={duplicateReasons[job.id] || 'Duplicate application entry'}
-                              style={{
-                                fontSize: 10,
-                                fontWeight: 600,
-                                color: '#E11D48',
-                                background: 'rgba(225, 29, 72, 0.08)',
-                                border: '1px solid rgba(225, 29, 72, 0.25)',
-                                padding: '2px 6px',
-                                borderRadius: 4,
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: 3,
-                                flexShrink: 0,
-                                whiteSpace: 'nowrap',
-                              }}
-                            >
-                              <Copy size={9} /> Duplicate
-                            </span>
-                          )}
-                          {staleJobIds.has(job.id) && (
-                            <span
-                              title={`Applied ${job.date_applied ? daysBetween(job.date_applied) : 7}+ days ago without response`}
-                              style={{
-                                fontSize: 10,
-                                fontWeight: 600,
-                                color: '#D97706',
-                                background: 'rgba(245, 158, 11, 0.09)',
-                                border: '1px solid rgba(245, 158, 11, 0.25)',
-                                padding: '2px 6px',
-                                borderRadius: 4,
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: 3,
-                                flexShrink: 0,
-                                whiteSpace: 'nowrap',
-                              }}
-                            >
-                              <Clock size={9} /> Follow-up
-                            </span>
-                          )}
-                        </div>
+                    const urls = extractUrls(job.job_url)
+                    const primaryUrl = urls.find(u => /^https?:\/\//i.test(u)) || (urls[0] ? `https://${urls[0]}` : undefined)
+                    const hasMetadata = Boolean(job.location || job.salary_info)
 
-                        <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', display: 'flex', alignItems: 'center', height: '100%', overflow: 'hidden' }}>
+                    return (
+                      <tr
+                        key={job.id}
+                        onClick={() => setEditingJob(job)}
+                        className="job-row row-in"
+                        style={{
+                          borderBottom: i < visibleJobs.length - 1 ? '1px solid var(--border)' : 'none',
+                          animationDelay: `${Math.min(i * 25, 300)}ms`,
+                          opacity: updating === job.id ? 0.5 : 1,
+                          transition: 'opacity 200ms, background-color 150ms',
+                          cursor: 'pointer',
+                          verticalAlign: 'top',
+                        }}
+                      >
+                        {/* # Row Number */}
+                        <td
+                          style={{
+                            padding: '14px 12px',
+                            borderRight: '1px solid var(--border)',
+                            textAlign: 'center',
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: 'var(--ink-3)',
+                            fontVariantNumeric: 'tabular-nums',
+                          }}
+                        >
+                          {i + 1}
+                        </td>
+
+                        {/* Job ID (full wrapped text, never hidden) */}
+                        <td
+                          style={{
+                            padding: '14px 14px',
+                            borderRight: '1px solid var(--border)',
+                            fontSize: 12,
+                            color: 'var(--ink-2)',
+                            whiteSpace: 'normal',
+                            wordBreak: 'break-word',
+                            lineHeight: 1.5,
+                          }}
+                        >
                           {job.job_id ? (
-                            <span title={job.job_id} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--accent)', background: 'var(--accent-bg)', padding: '2px 8px', borderRadius: 4, fontWeight: 500, overflow: 'hidden', maxWidth: '100%' }}>
-                              <Hash size={10} style={{ flexShrink: 0 }} />
-                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{job.job_id}</span>
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'flex-start',
+                                gap: 4,
+                                fontSize: 11.5,
+                                color: 'var(--accent-2)',
+                                background: 'var(--accent-bg)',
+                                padding: '3px 8px',
+                                borderRadius: 5,
+                                fontWeight: 500,
+                                whiteSpace: 'normal',
+                                wordBreak: 'break-word',
+                              }}
+                            >
+                              <Hash size={10} style={{ flexShrink: 0, marginTop: 3 }} />
+                              <span>{job.job_id}</span>
                             </span>
                           ) : (
                             <span style={{ fontSize: 12, color: 'var(--ink-4)' }}>-</span>
                           )}
-                        </div>
+                        </td>
 
-                        <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', fontSize: 12, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', height: '100%' }}>
-                          {job.date_applied ? new Date(job.date_applied).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
-                        </div>
+                        {/* Role (bold, full wrapped text + alert badges) */}
+                        <td
+                          style={{
+                            padding: '14px 14px',
+                            borderRight: '1px solid var(--border)',
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: 'var(--ink)',
+                            lineHeight: 1.45,
+                            whiteSpace: 'normal',
+                            wordBreak: 'break-word',
+                          }}
+                        >
+                          <div>{job.role}</div>
+                          {(duplicateJobIds.has(job.id) || staleJobIds.has(job.id)) && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 6 }}>
+                              {duplicateJobIds.has(job.id) && (
+                                <span
+                                  title={duplicateReasons[job.id] || 'Duplicate application entry'}
+                                  style={{
+                                    fontSize: 10,
+                                    fontWeight: 600,
+                                    color: '#E11D48',
+                                    background: 'rgba(225, 29, 72, 0.08)',
+                                    border: '1px solid rgba(225, 29, 72, 0.25)',
+                                    padding: '2px 6px',
+                                    borderRadius: 4,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 3,
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  <Copy size={9} /> Duplicate
+                                </span>
+                              )}
+                              {staleJobIds.has(job.id) && (
+                                <span
+                                  title={`Applied ${job.date_applied ? daysBetween(job.date_applied) : 7}+ days ago without response`}
+                                  style={{
+                                    fontSize: 10,
+                                    fontWeight: 600,
+                                    color: '#D97706',
+                                    background: 'rgba(245, 158, 11, 0.09)',
+                                    border: '1px solid rgba(245, 158, 11, 0.25)',
+                                    padding: '2px 6px',
+                                    borderRadius: 4,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 3,
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  <Clock size={9} /> Follow-up
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </td>
 
-                        <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', fontSize: 13, color: 'var(--ink-2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', height: '100%' }}>
-                          {job.location || '-'}
-                        </div>
+                        {/* Company (full wrapped text, never truncated) */}
+                        <td
+                          style={{
+                            padding: '14px 14px',
+                            borderRight: '1px solid var(--border)',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
+                            <div style={{ marginTop: 1 }}>
+                              <CompanyFavicon company={job.company_name} />
+                            </div>
+                            <span
+                              style={{
+                                fontWeight: 600,
+                                fontSize: 13,
+                                color: 'var(--ink)',
+                                lineHeight: 1.45,
+                                whiteSpace: 'normal',
+                                wordBreak: 'break-word',
+                              }}
+                            >
+                              {job.company_name}
+                            </span>
+                          </div>
+                        </td>
 
-                        <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', fontSize: 12, color: 'var(--ink-2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', height: '100%' }}>
-                          {job.salary_info || '-'}
-                        </div>
+                        {/* Date Applied */}
+                        <td
+                          style={{
+                            padding: '14px 14px',
+                            borderRight: '1px solid var(--border)',
+                            fontSize: 12.5,
+                            color: 'var(--ink-2)',
+                            whiteSpace: 'nowrap',
+                            lineHeight: 1.45,
+                          }}
+                        >
+                          {job.date_applied
+                            ? new Date(job.date_applied).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                            : '-'}
+                        </td>
 
-                        <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', fontSize: 12, color: 'var(--ink-3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', height: '100%' }}>
-                          {job.notes || '-'}
-                        </div>
+                        {/* Details & Notes (Location, Salary, Notes — 100% visible, auto-expanding height) */}
+                        <td
+                          style={{
+                            padding: '14px 16px',
+                            borderRight: '1px solid var(--border)',
+                            fontSize: 12.5,
+                            color: 'var(--ink-2)',
+                            lineHeight: 1.55,
+                            whiteSpace: 'normal',
+                            wordBreak: 'break-word',
+                          }}
+                        >
+                          {job.notes && (
+                            <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: 'var(--ink)' }}>
+                              {job.notes}
+                            </div>
+                          )}
+                          {hasMetadata && (
+                            <div
+                              style={{
+                                marginTop: job.notes ? 6 : 0,
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                gap: '4px 12px',
+                                fontSize: 12,
+                                color: 'var(--ink-2)',
+                              }}
+                            >
+                              {job.location && (
+                                <span>
+                                  <strong style={{ color: 'var(--ink-3)', fontWeight: 600 }}>Location:</strong> {job.location}
+                                </span>
+                              )}
+                              {job.salary_info && (
+                                <span>
+                                  <strong style={{ color: 'var(--ink-3)', fontWeight: 600 }}>Salary:</strong> {job.salary_info}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          {!job.notes && !hasMetadata && (
+                            <span style={{ color: 'var(--ink-4)' }}>-</span>
+                          )}
+                        </td>
 
-                        <div style={{ padding: '12px 16px', borderRight: '1px solid var(--border)', display: 'flex', alignItems: 'center', height: '100%' }} onClick={e => e.stopPropagation()}>
-                          <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
-                            <span className="status-pill" style={{ color: st.color, background: st.bg, width: 'fit-content' }}>
+                        {/* Job Link (Full wrapped clickable URL(s), never hidden) */}
+                        <td
+                          style={{
+                            padding: '14px 14px',
+                            borderRight: '1px solid var(--border)',
+                            fontSize: 12,
+                            lineHeight: 1.5,
+                            whiteSpace: 'normal',
+                            wordBreak: 'break-all',
+                          }}
+                          onClick={e => e.stopPropagation()}
+                        >
+                          {urls.length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                              {urls.map((rawUrl, idx) => {
+                                const href = /^https?:\/\//i.test(rawUrl) ? rawUrl : `https://${rawUrl}`
+                                return (
+                                  <a
+                                    key={idx}
+                                    href={href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                      color: 'var(--accent-2)',
+                                      textDecoration: 'underline',
+                                      textUnderlineOffset: '2px',
+                                      wordBreak: 'break-all',
+                                    }}
+                                    onMouseOver={e => (e.currentTarget.style.color = 'var(--accent)')}
+                                    onMouseOut={e => (e.currentTarget.style.color = 'var(--accent-2)')}
+                                  >
+                                    {rawUrl}
+                                  </a>
+                                )
+                              })}
+                            </div>
+                          ) : (
+                            <span style={{ color: 'var(--ink-4)' }}>-</span>
+                          )}
+                        </td>
+
+                        {/* Status */}
+                        <td
+                          style={{
+                            padding: '14px 14px',
+                            borderRight: '1px solid var(--border)',
+                          }}
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <div style={{ position: 'relative', display: 'inline-block', width: 'fit-content' }}>
+                            <span className="status-pill" style={{ color: st.color, background: st.bg, width: 'fit-content', whiteSpace: 'nowrap' }}>
                               <span className="status-dot" style={{ background: st.color }} />
                               {job.status}
                             </span>
-                            <select value={job.status} onChange={e => handleStatus(job.id, e.target.value as JobStatus)}
+                            <select
+                              value={job.status}
+                              onChange={e => handleStatus(job.id, e.target.value as JobStatus)}
                               disabled={updating === job.id}
-                              style={{ position: 'absolute', zIndex: 10, inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}>
+                              style={{ position: 'absolute', zIndex: 10, inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}
+                            >
                               {ALL_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
                           </div>
-                        </div>
+                        </td>
 
-                        <div style={{ padding: '12px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, height: '100%' }}>
-                          {job.job_url ? (
-                            <a href={job.job_url} target="_blank" rel="noopener noreferrer"
-                              onClick={e => e.stopPropagation()}
-                              style={{ color: 'var(--ink-4)', transition: 'color 150ms', display: 'flex', alignItems: 'center' }}
+                        {/* Actions (Image 2 section) */}
+                        <td
+                          style={{
+                            padding: '14px 12px',
+                          }}
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                            {primaryUrl ? (
+                              <a
+                                href={primaryUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ color: 'var(--ink-4)', transition: 'color 150ms', display: 'flex', alignItems: 'center', padding: 3 }}
+                                onMouseOver={e => (e.currentTarget.style.color = 'var(--accent)')}
+                                onMouseOut={e => (e.currentTarget.style.color = 'var(--ink-4)')}
+                                title="Open Job Link"
+                              >
+                                <ExternalLink size={14} />
+                              </a>
+                            ) : (
+                              <span style={{ width: 20 }} />
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setEditingJob(job)}
+                              style={{ color: 'var(--ink-4)', background: 'none', border: 'none', cursor: 'pointer', padding: 3, transition: 'color 150ms', display: 'flex', alignItems: 'center' }}
                               onMouseOver={e => (e.currentTarget.style.color = 'var(--accent)')}
                               onMouseOut={e => (e.currentTarget.style.color = 'var(--ink-4)')}
-                              title="Open Job Link">
-                              <ExternalLink size={13} />
-                            </a>
-                          ) : (
-                            <span style={{ width: 13 }} />
-                          )}
-                          <button onClick={e => { e.stopPropagation(); setEditingJob(job); }}
-                            style={{ color: 'var(--ink-4)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: 'color 150ms', display: 'flex', alignItems: 'center' }}
-                            onMouseOver={e => (e.currentTarget.style.color = 'var(--accent)')}
-                            onMouseOut={e => (e.currentTarget.style.color = 'var(--ink-4)')}
-                            title="Edit Details">
-                            <Edit2 size={13} />
-                          </button>
-                          <button onClick={e => handleDelete(job.id, e)} disabled={updating === job.id}
-                            style={{ color: 'var(--ink-4)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: 'color 150ms', display: 'flex', alignItems: 'center' }}
-                            onMouseOver={e => (e.currentTarget.style.color = 'var(--s-rejected)')}
-                            onMouseOut={e => (e.currentTarget.style.color = 'var(--ink-4)')}
-                            title="Delete">
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
-                      </div>
+                              title="Edit Details"
+                            >
+                              <Edit2 size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={e => handleDelete(job.id, e)}
+                              disabled={updating === job.id}
+                              style={{ color: 'var(--ink-4)', background: 'none', border: 'none', cursor: 'pointer', padding: 3, transition: 'color 150ms', display: 'flex', alignItems: 'center' }}
+                              onMouseOver={e => (e.currentTarget.style.color = 'var(--s-rejected)')}
+                              onMouseOut={e => (e.currentTarget.style.color = 'var(--ink-4)')}
+                              title="Delete"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
                     )
                   })}
-              </div>
-            </div>
+              </tbody>
+            </table>
           </div>
         </div>
       )}
